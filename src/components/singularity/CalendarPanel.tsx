@@ -98,7 +98,7 @@ const CalendarPanel = () => {
       {calView !== "daily" && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 3, marginBottom: 4 }}>
           {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
-            <div key={i} style={{ textAlign: "center", fontFamily: "'Rajdhani', sans-serif", fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.3)" }}>{d}</div>
+            <div key={i} style={{ textAlign: "center", fontFamily: "'Cormorant', serif", fontSize: 9, fontWeight: 500, color: "rgba(255,255,255,0.3)" }}>{d}</div>
           ))}
         </div>
       )}
