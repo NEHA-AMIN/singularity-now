@@ -300,36 +300,143 @@ const Overview = () => {
               boxShadow: "0 0 20px rgba(57,208,255,0.06), 0 0 20px rgba(139,92,255,0.06), 0 0 20px rgba(255,79,216,0.06)",
             }}>
               <div className="los-h">Active Projects</div>
+              {/* Hidden file input */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept="image/*,video/*,application/pdf"
+                style={{ display: "none" }}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file && projectMenu) {
+                    const key = `${projectMenu.catKey}-${projectMenu.idx}`;
+                    const url = URL.createObjectURL(file);
+                    setProjectAttachments(prev => ({
+                      ...prev,
+                      [key]: [...(prev[key] || []), url],
+                    }));
+                    setProjectMenu(null);
+                  }
+                  e.target.value = "";
+                }}
+              />
               {PROJECT_CATEGORIES.map((cat) => {
                 const catProjects = projects[cat.key] || [];
                 return catProjects.map((projName, pi) => {
                   const animKey = `${cat.key}-${pi}`;
                   const isNew = newlyAdded === animKey;
+                  const attachments = projectAttachments[animKey] || [];
+                  const menuOpen = projectMenu?.catKey === cat.key && projectMenu?.idx === pi;
                   return (
                     <div key={animKey} className={isNew ? "slide-append" : ""} onAnimationEnd={() => { if (isNew) setNewlyAdded(null); }} style={{
                       background: cat.bc, border: `1px solid ${cat.bb}`,
                       borderRadius: 10, padding: "10px 12px", marginBottom: 8,
-                      display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10,
+                      position: "relative",
                     }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <svg width="14" height="12" viewBox="0 0 14 12" fill="none" style={{ flexShrink: 0 }}>
-                          <path d="M1 3V10C1 10.55 1.45 11 2 11H12C12.55 11 13 10.55 13 10V4C13 3.45 12.55 3 12 3H7L5.5 1H2C1.45 1 1 1.45 1 2V3Z" fill={cat.fc} opacity="0.8"/>
-                        </svg>
-                        <span style={{ fontFamily: "'Raleway',sans-serif", fontSize: 11, fontWeight: 500, color: "#E8ECF4", letterSpacing: 0.5 }}>{projName}</span>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                        <div
+                          style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, cursor: "pointer" }}
+                          onClick={() => setProjectMenu(menuOpen ? null : { catKey: cat.key, idx: pi })}
+                        >
+                          <svg width="14" height="12" viewBox="0 0 14 12" fill="none" style={{ flexShrink: 0 }}>
+                            <path d="M1 3V10C1 10.55 1.45 11 2 11H12C12.55 11 13 10.55 13 10V4C13 3.45 12.55 3 12 3H7L5.5 1H2C1.45 1 1 1.45 1 2V3Z" fill={cat.fc} opacity="0.8"/>
+                          </svg>
+                          <span style={{ fontFamily: "'Raleway',sans-serif", fontSize: 11, fontWeight: 500, color: "#E8ECF4", letterSpacing: 0.5 }}>{projName}</span>
+                        </div>
+                        <div
+                          onClick={(e) => { e.stopPropagation(); setAddProjectDialog(cat.key); setNewProjectName(""); }}
+                          style={{
+                            background: cat.g, borderRadius: 14,
+                            padding: "3px 12px", cursor: "pointer",
+                            fontFamily: "'Raleway',sans-serif", fontSize: 8, fontWeight: 700,
+                            color: "#fff", letterSpacing: 1.2, textTransform: "uppercase",
+                            whiteSpace: "nowrap", flexShrink: 0,
+                            transition: "filter 0.2s ease",
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.filter = "brightness(1.2)"}
+                          onMouseLeave={e => e.currentTarget.style.filter = "brightness(1)"}
+                        >{cat.s}</div>
                       </div>
-                      <div
-                        onClick={() => { setAddProjectDialog(cat.key); setNewProjectName(""); }}
-                        style={{
-                          background: cat.g, borderRadius: 14,
-                          padding: "3px 12px", cursor: "pointer",
-                          fontFamily: "'Raleway',sans-serif", fontSize: 8, fontWeight: 700,
-                          color: "#fff", letterSpacing: 1.2, textTransform: "uppercase",
-                          whiteSpace: "nowrap", flexShrink: 0,
-                          transition: "filter 0.2s ease",
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.filter = "brightness(1.2)"}
-                        onMouseLeave={e => e.currentTarget.style.filter = "brightness(1)"}
-                      >{cat.s}</div>
+
+                      {/* Attachment thumbnails */}
+                      {attachments.length > 0 && (
+                        <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
+                          {attachments.map((url, ai) => (
+                            <div key={ai} style={{
+                              width: 36, height: 36, borderRadius: 6, overflow: "hidden",
+                              border: `1px solid ${cat.bb}`, position: "relative",
+                              background: "rgba(0,0,0,0.3)",
+                            }}>
+                              <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Context menu popup */}
+                      {menuOpen && (
+                        <>
+                          <div onClick={() => setProjectMenu(null)} style={{ position: "fixed", inset: 0, zIndex: 99 }} />
+                          <div style={{
+                            position: "absolute", left: 14, top: "100%", marginTop: 4, zIndex: 100,
+                            background: "rgba(10,10,10,0.94)", border: "1px solid rgba(255,255,255,0.08)",
+                            borderRadius: 10, padding: 4, minWidth: 140,
+                            boxShadow: "0 8px 30px rgba(0,0,0,0.7), 0 0 15px rgba(139,92,255,0.06)",
+                            backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
+                            animation: "slideAppend 0.25s cubic-bezier(0.22,1,0.36,1) forwards",
+                          }}>
+                            {/* Attach */}
+                            <div
+                              onClick={() => { fileInputRef.current?.click(); }}
+                              style={{
+                                display: "flex", alignItems: "center", gap: 8,
+                                padding: "8px 12px", borderRadius: 8, cursor: "pointer",
+                                fontFamily: "'Raleway',sans-serif", fontSize: 11, fontWeight: 500,
+                                color: "#E8ECF4", letterSpacing: 0.5,
+                                transition: "background 0.15s ease",
+                              }}
+                              onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"}
+                              onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={cat.fc} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
+                              </svg>
+                              Attach Media
+                            </div>
+                            {/* Remove */}
+                            <div
+                              onClick={() => {
+                                setProjects(prev => ({
+                                  ...prev,
+                                  [cat.key]: (prev[cat.key] || []).filter((_, idx) => idx !== pi),
+                                }));
+                                // Clean up attachments
+                                const key = `${cat.key}-${pi}`;
+                                setProjectAttachments(prev => {
+                                  const n = { ...prev };
+                                  delete n[key];
+                                  return n;
+                                });
+                                setProjectMenu(null);
+                              }}
+                              style={{
+                                display: "flex", alignItems: "center", gap: 8,
+                                padding: "8px 12px", borderRadius: 8, cursor: "pointer",
+                                fontFamily: "'Raleway',sans-serif", fontSize: 11, fontWeight: 500,
+                                color: "#FF5555", letterSpacing: 0.5,
+                                transition: "background 0.15s ease",
+                              }}
+                              onMouseEnter={e => e.currentTarget.style.background = "rgba(255,85,85,0.08)"}
+                              onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FF5555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                              </svg>
+                              Remove
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                   );
                 });
