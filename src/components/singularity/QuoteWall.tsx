@@ -12,13 +12,10 @@ const QuoteWall = () => {
 
   return (
     <div
+      className="glass-card"
       style={{
-        flex: 0.7,
-        background: "linear-gradient(180deg, rgba(22,16,40,0.85), rgba(14,10,28,0.9))",
-        border: "1.5px solid rgba(100,70,160,0.25)",
-        borderRadius: 12, padding: "12px 10px",
+        flex: 0.7, padding: "12px 10px",
         display: "flex", flexDirection: "column", justifyContent: "space-between",
-        position: "relative",
       }}
     >
       <svg viewBox="0 0 120 8" style={{ position: "absolute", top: -5, left: 15, right: 15, width: "calc(100% - 30px)", height: 8 }}>

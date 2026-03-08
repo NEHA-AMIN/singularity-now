@@ -15,15 +15,8 @@ const LevelBar = () => (
       </div>
     </div>
 
-    {/* DPS + COINS badge */}
-    <div
-      className="flex justify-between items-center relative"
-      style={{
-        background: "linear-gradient(135deg, rgba(22,16,40,0.9), rgba(16,12,30,0.95))",
-        border: "1.5px solid rgba(100,70,160,0.3)",
-        borderRadius: 10, padding: "8px 16px",
-      }}
-    >
+    {/* GYM + MICRON badge */}
+    <div className="glass-badge flex justify-between items-center relative" style={{ padding: "8px 16px" }}>
       {[0, 1].map(i => (
         <div
           key={i}

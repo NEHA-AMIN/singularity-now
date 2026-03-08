@@ -1,12 +1,5 @@
 const TitlePanel = () => (
-  <div
-    style={{
-      margin: "0 14px", padding: "20px 10px 16px", textAlign: "center",
-      background: "linear-gradient(180deg, rgba(22,16,40,0.95) 0%, rgba(14,10,28,0.98) 100%)",
-      border: "1.5px solid rgba(100,70,160,0.3)",
-      borderRadius: 14, position: "relative",
-    }}
-  >
+  <div className="glass-card" style={{ margin: "0 14px", padding: "20px 10px 16px", textAlign: "center" }}>
     {/* Ornate corners */}
     {[0, 1, 2, 3].map(i => (
       <div
