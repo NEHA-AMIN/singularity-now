@@ -74,6 +74,20 @@ const STATUS_BUTTONS = [
   },
 ];
 
+const PROJECT_CATEGORIES = [
+  { key: "in_progress", s: "IN PROGRESS", g: "linear-gradient(90deg,#8B5CFF,#39D0FF)", fc: "#8B5CFF", bc: "rgba(139,92,255,0.08)", bb: "rgba(139,92,255,0.2)" },
+  { key: "on_track", s: "ON TRACK", g: "linear-gradient(90deg,#1FD3C6,#39D0FF)", fc: "#39D0FF", bc: "rgba(57,208,255,0.08)", bb: "rgba(57,208,255,0.2)" },
+  { key: "at_risk", s: "AT RISK", g: "linear-gradient(90deg,#FF8A3D,#FF4FD8)", fc: "#FF8A3D", bc: "rgba(255,138,61,0.08)", bb: "rgba(255,138,61,0.2)" },
+  { key: "planning", s: "PLANNING", g: "linear-gradient(90deg,#4a5568,#8B5CFF)", fc: "#9AA3B2", bc: "rgba(100,100,120,0.08)", bb: "rgba(100,100,120,0.2)" },
+];
+
+const INITIAL_PROJECTS: Record<string, string[]> = {
+  in_progress: ["GRL Paper"],
+  on_track: ["NeurIPS Paper"],
+  at_risk: ["Springer NDE"],
+  planning: ["Space Science"],
+};
+
 const Overview = () => {
   const [notes, setNotes] = useState<string[]>(INITIAL_NOTES);
   const [reviewed, setReviewed] = useState<string[]>([]);
@@ -86,6 +100,12 @@ const Overview = () => {
   const [hoveredPriority, setHoveredPriority] = useState<number | null>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const navigate = useNavigate();
+
+  // Active Projects state
+  const [projects, setProjects] = useState<Record<string, string[]>>(INITIAL_PROJECTS);
+  const [addProjectDialog, setAddProjectDialog] = useState<string | null>(null); // category key
+  const [newProjectName, setNewProjectName] = useState("");
+  const [newlyAdded, setNewlyAdded] = useState<string | null>(null); // "catKey-index" for animation
   const now = new Date();
   const year = now.getFullYear(), month = now.getMonth(), today = now.getDate();
   const monthName = now.toLocaleString("default", { month: "long" });
