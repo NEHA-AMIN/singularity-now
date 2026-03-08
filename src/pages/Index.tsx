@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { GothicTopBorder, GothicBottomBorder } from "@/components/singularity/GothicBorder";
 import { GodQuoteOverlay, SanctuaryOverlay } from "@/components/singularity/Overlays";
 import TitlePanel from "@/components/singularity/TitlePanel";
@@ -16,6 +17,7 @@ const QUOTES = [
 ];
 
 const Index = () => {
+  const navigate = useNavigate();
   const [showSanctuary, setShowSanctuary] = useState(false);
   const [showGod, setShowGod] = useState(true);
 
@@ -76,6 +78,7 @@ const Index = () => {
           </button>
           <button
             className="glass-button"
+            onClick={() => navigate("/overview")}
             style={{
               fontFamily: "'Cinzel', serif", fontSize: 14, fontWeight: 700,
               color: "#c4b5fd", letterSpacing: 5,
