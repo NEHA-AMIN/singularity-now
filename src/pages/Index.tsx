@@ -89,7 +89,7 @@ const Index = () => {
           className="text-center"
           style={{
             padding: "4px 0 16px",
-            fontFamily: "'Rajdhani', sans-serif", fontSize: 8,
+            fontFamily: "'Cormorant', serif", fontSize: 9, fontWeight: 300,
             color: "rgba(255,255,255,0.06)", letterSpacing: 4, textTransform: "uppercase",
           }}
         >
