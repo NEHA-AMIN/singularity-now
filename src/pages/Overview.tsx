@@ -27,6 +27,7 @@ const INITIAL_NOTES = [
 
 const Overview = () => {
   const [notes, setNotes] = useState<string[]>(INITIAL_NOTES);
+  const [reviewed, setReviewed] = useState<string[]>([]);
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [newNote, setNewNote] = useState("");
   const navigate = useNavigate();
