@@ -251,7 +251,7 @@ const Overview = () => {
               backgroundPosition: "0 52px",
             }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div className="los-h" style={{ marginBottom: 0 }}>Quick Notes</div>
+                <div className="los-h" style={{ marginBottom: 0 }}>Capture Thoughts</div>
                 <button
                   onClick={() => setShowNoteModal(true)}
                   style={{
