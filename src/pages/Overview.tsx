@@ -386,52 +386,102 @@ const Overview = () => {
                     ))}
                   </div>
 
-                  {/* Priority popup */}
+                  {/* Priority popup — glass pill buttons */}
                   {priorityPopup === i && (
                     <>
-                      <div onClick={() => setPriorityPopup(null)} style={{ position: "fixed", inset: 0, zIndex: 99 }} />
+                      <div onClick={() => { setPriorityPopup(null); setHoveredPriority(null); }} style={{ position: "fixed", inset: 0, zIndex: 99 }} />
                       <div style={{
-                        position: "absolute", left: 24, top: -4, zIndex: 100,
-                        background: "#12101e", border: "1px solid rgba(255,79,216,0.25)",
-                        borderRadius: 10, padding: 6, display: "flex", flexDirection: "column", gap: 2,
-                        boxShadow: "0 4px 20px rgba(0,0,0,0.6), 0 0 15px rgba(255,79,216,0.1)",
-                        minWidth: 130,
+                        position: "absolute", left: 28, top: -8, zIndex: 100,
+                        background: "rgba(10,10,10,0.92)", border: "1px solid rgba(255,255,255,0.06)",
+                        borderRadius: 16, padding: 8, display: "flex", flexDirection: "column", gap: 6,
+                        boxShadow: "0 8px 40px rgba(0,0,0,0.7), 0 0 20px rgba(139,92,255,0.08)",
+                        backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
+                        minWidth: 172,
                       }}>
-                        {Object.entries(PRIORITY_COLORS).map(([key, val]) => (
-                          <button
-                            key={key}
-                            onClick={() => {
-                              setPriorities(prev => ({ ...prev, [i]: key }));
-                              setPriorityPopup(null);
-                            }}
-                            style={{
-                              background: priorities[i] === key ? val.bg : "transparent",
-                              border: "none", borderRadius: 6, padding: "6px 10px",
-                              fontFamily: "'Raleway',sans-serif", fontSize: 11, fontWeight: 500,
-                              color: "#E8ECF4", cursor: "pointer", textAlign: "left",
-                              transition: "background 0.15s ease",
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.background = val.bg}
-                            onMouseLeave={e => { if (priorities[i] !== key) e.currentTarget.style.background = "transparent"; }}
-                          >
-                            {val.label}
-                          </button>
-                        ))}
+                        {STATUS_BUTTONS.map((btn, idx) => {
+                          const isHover = hoveredPriority === idx;
+                          const isActive = priorities[i] === btn.key;
+                          return (
+                            <div
+                              key={btn.key}
+                              style={{ position: "relative", borderRadius: 100, cursor: "pointer" }}
+                              onMouseEnter={() => setHoveredPriority(idx)}
+                              onMouseLeave={() => setHoveredPriority(null)}
+                              onClick={() => {
+                                setPriorities(prev => ({ ...prev, [i]: btn.key }));
+                                setPriorityPopup(null);
+                                setHoveredPriority(null);
+                              }}
+                            >
+                              {/* Halo glow on hover */}
+                              <div style={{
+                                position: "absolute", inset: -8, borderRadius: 100, pointerEvents: "none", zIndex: -1,
+                                opacity: isHover ? 1 : 0, transition: "opacity 0.4s ease, box-shadow 0.4s ease",
+                                boxShadow: isHover ? `0 0 28px ${btn.glow}, 0 0 56px ${btn.glow.replace(/[\d.]+\)$/, "0.14)")}, 0 0 80px ${btn.glow.replace(/[\d.]+\)$/, "0.06)")}` : "none",
+                              }} />
+                              {/* Border ring */}
+                              <div style={{
+                                position: "absolute", inset: 0, borderRadius: 100, pointerEvents: "none", zIndex: 1,
+                                border: `1px solid rgba(255,255,255,${isHover ? 0.04 : 0.08})`,
+                                transition: "border-color 0.3s ease",
+                              }} />
+                              {/* Glass pill */}
+                              <div style={{
+                                position: "relative", display: "flex", alignItems: "center", gap: 10,
+                                padding: "8px 18px 8px 14px", borderRadius: 100, fontSize: 13, fontWeight: 500,
+                                letterSpacing: "0.02em", color: btn.textColor, overflow: "hidden", zIndex: 2, width: "100%",
+                                fontFamily: "'Raleway', sans-serif",
+                                background: isHover || isActive ? btn.tint : "rgba(255,255,255,0.04)",
+                                backdropFilter: "blur(20px) saturate(1.4)", WebkitBackdropFilter: "blur(20px) saturate(1.4)",
+                                boxShadow: isHover
+                                  ? "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)"
+                                  : "0 4px 16px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06)",
+                                transition: "all 0.35s cubic-bezier(0.4,0,0.2,1)",
+                                transform: isHover ? "translateY(-1px)" : "translateY(0)",
+                              }}>
+                                {/* Top refraction */}
+                                <div style={{
+                                  position: "absolute", top: 0, left: "8%", right: "8%", height: "50%",
+                                  borderRadius: "100px 100px 50% 50%", pointerEvents: "none",
+                                  background: `linear-gradient(180deg, rgba(255,255,255,${isHover ? 0.06 : 0.04}) 0%, transparent 100%)`,
+                                  transition: "all 0.35s ease",
+                                }} />
+                                <span style={{
+                                  position: "relative", zIndex: 2, display: "flex", alignItems: "center", flexShrink: 0,
+                                  filter: isHover ? `drop-shadow(0 0 5px ${btn.ring}66)` : "none",
+                                  transition: "filter 0.35s ease",
+                                }}>
+                                  {btn.icon(btn.textColor)}
+                                </span>
+                                <span style={{
+                                  position: "relative", zIndex: 2, whiteSpace: "nowrap",
+                                  textShadow: isHover ? `0 0 8px ${btn.ring}44` : "none",
+                                  transition: "text-shadow 0.35s ease",
+                                }}>
+                                  {btn.label}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
                         {priorities[i] && (
-                          <button
+                          <div
                             onClick={() => {
                               setPriorities(prev => { const n = { ...prev }; delete n[i]; return n; });
-                              setPriorityPopup(null);
+                              setPriorityPopup(null); setHoveredPriority(null);
                             }}
                             style={{
-                              background: "transparent", border: "none", borderRadius: 6,
-                              padding: "6px 10px", fontFamily: "'Raleway',sans-serif", fontSize: 10,
-                              fontWeight: 500, color: "#9AA3B2", cursor: "pointer", textAlign: "left",
+                              textAlign: "center", padding: "6px 10px", cursor: "pointer",
+                              fontFamily: "'Raleway',sans-serif", fontSize: 10, fontWeight: 500,
+                              color: "rgba(255,255,255,0.3)", letterSpacing: 1,
                               borderTop: "1px solid rgba(255,255,255,0.06)", marginTop: 2,
+                              transition: "color 0.2s ease",
                             }}
+                            onMouseEnter={e => e.currentTarget.style.color = "rgba(255,255,255,0.6)"}
+                            onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.3)"}
                           >
-                            ✕ Clear
-                          </button>
+                            ✕ CLEAR
+                          </div>
                         )}
                       </div>
                     </>
