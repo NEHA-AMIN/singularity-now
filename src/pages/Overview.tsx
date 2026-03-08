@@ -272,11 +272,43 @@ const Overview = () => {
                 </button>
               </div>
               {notes.map((note, i) => (
-                <div key={`note-${i}`} style={{
-                  padding: "8px 0",
-                  borderBottom: i < notes.length - 1 ? "1px solid rgba(255,79,216,0.08)" : "none",
-                  display: "flex", alignItems: "center", gap: 8,
-                }}>
+                <div
+                  key={`note-${i}`}
+                  draggable
+                  onDragStart={() => setDragIdx(i)}
+                  onDragOver={e => { e.preventDefault(); setDragOverIdx(i); }}
+                  onDragEnd={() => {
+                    if (dragIdx !== null && dragOverIdx !== null && dragIdx !== dragOverIdx) {
+                      setNotes(prev => {
+                        const updated = [...prev];
+                        const [moved] = updated.splice(dragIdx, 1);
+                        updated.splice(dragOverIdx, 0, moved);
+                        return updated;
+                      });
+                    }
+                    setDragIdx(null);
+                    setDragOverIdx(null);
+                  }}
+                  style={{
+                    padding: "8px 0",
+                    borderBottom: i < notes.length - 1 ? "1px solid rgba(255,79,216,0.08)" : "none",
+                    display: "flex", alignItems: "center", gap: 8,
+                    opacity: dragIdx === i ? 0.4 : 1,
+                    background: dragOverIdx === i && dragIdx !== i ? "rgba(255,79,216,0.06)" : "transparent",
+                    borderRadius: 6,
+                    transition: "background 0.15s ease, opacity 0.15s ease",
+                  }}
+                >
+                  {/* Drag handle */}
+                  <div style={{
+                    cursor: "grab", flexShrink: 0, display: "flex", flexDirection: "column",
+                    alignItems: "center", justifyContent: "center", gap: 2, padding: "0 2px",
+                  }}>
+                    {[0, 1, 2].map(d => (
+                      <div key={d} style={{ width: 3, height: 3, borderRadius: "50%", background: "rgba(255,79,216,0.35)" }} />
+                    ))}
+                  </div>
+                  {/* Checkbox */}
                   <div
                     onClick={() => {
                       setNotes(prev => prev.filter((_, idx) => idx !== i));
@@ -288,7 +320,7 @@ const Overview = () => {
                       transition: "background 0.2s ease, border-color 0.2s ease",
                     }}
                   />
-                  <div style={{ fontFamily: "'Caveat',cursive", fontSize: 15, fontWeight: 400, color: "#FF4FD8", lineHeight: 1.4, textShadow: "0 0 6px rgba(255,79,216,0.1)" }}>{note}</div>
+                  <div style={{ fontFamily: "'Caveat',cursive", fontSize: 15, fontWeight: 400, color: "#FF4FD8", lineHeight: 1.4, textShadow: "0 0 6px rgba(255,79,216,0.1)", flex: 1 }}>{note}</div>
                 </div>
               ))}
 
