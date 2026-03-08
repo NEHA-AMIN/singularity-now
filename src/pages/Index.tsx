@@ -64,7 +64,7 @@ const Index = () => {
         </div>
 
         {/* GOAL BUTTON */}
-        <div className="flex justify-end" style={{ padding: "16px 14px 8px" }}>
+        <div className="flex justify-center" style={{ padding: "16px 14px 8px" }}>
           <button
             style={{
               fontFamily: "'Cinzel', serif", fontSize: 14, fontWeight: 700,
