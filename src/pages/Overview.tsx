@@ -75,10 +75,10 @@ const STATUS_BUTTONS = [
 ];
 
 const PROJECT_CATEGORIES = [
-  { key: "in_progress", s: "IN PROGRESS", g: "linear-gradient(90deg,#8B5CFF,#39D0FF)", fc: "#8B5CFF", bc: "rgba(139,92,255,0.08)", bb: "rgba(139,92,255,0.2)" },
-  { key: "on_track", s: "ON TRACK", g: "linear-gradient(90deg,#1FD3C6,#39D0FF)", fc: "#39D0FF", bc: "rgba(57,208,255,0.08)", bb: "rgba(57,208,255,0.2)" },
-  { key: "at_risk", s: "AT RISK", g: "linear-gradient(90deg,#FF8A3D,#FF4FD8)", fc: "#FF8A3D", bc: "rgba(255,138,61,0.08)", bb: "rgba(255,138,61,0.2)" },
-  { key: "planning", s: "PLANNING", g: "linear-gradient(90deg,#4a5568,#8B5CFF)", fc: "#9AA3B2", bc: "rgba(100,100,120,0.08)", bb: "rgba(100,100,120,0.2)" },
+  { key: "in_progress", s: "WIP", g: "linear-gradient(90deg,#8B5CFF,#39D0FF)", fc: "#8B5CFF", bc: "rgba(139,92,255,0.08)", bb: "rgba(139,92,255,0.2)" },
+  { key: "on_track", s: "OT", g: "linear-gradient(90deg,#1FD3C6,#39D0FF)", fc: "#39D0FF", bc: "rgba(57,208,255,0.08)", bb: "rgba(57,208,255,0.2)" },
+  { key: "at_risk", s: "RISK", g: "linear-gradient(90deg,#FF8A3D,#FF4FD8)", fc: "#FF8A3D", bc: "rgba(255,138,61,0.08)", bb: "rgba(255,138,61,0.2)" },
+  { key: "planning", s: "PLAN", g: "linear-gradient(90deg,#4a5568,#8B5CFF)", fc: "#9AA3B2", bc: "rgba(100,100,120,0.08)", bb: "rgba(100,100,120,0.2)" },
 ];
 
 const INITIAL_PROJECTS: Record<string, string[]> = {
