@@ -329,22 +329,14 @@ const Overview = () => {
                     position: "relative",
                   }}
                 >
-                  {/* Drag handle with long-press */}
+                  {/* Drag handle — double-click for priority */}
                   <div
                     style={{
                       cursor: "grab", flexShrink: 0, display: "flex", flexDirection: "column",
                       alignItems: "center", justifyContent: "center", gap: 2, padding: "4px 4px",
                       borderRadius: 4,
                     }}
-                    onMouseDown={() => {
-                      longPressTimer.current = setTimeout(() => setPriorityPopup(i), 500);
-                    }}
-                    onMouseUp={() => { if (longPressTimer.current) clearTimeout(longPressTimer.current); }}
-                    onMouseLeave={() => { if (longPressTimer.current) clearTimeout(longPressTimer.current); }}
-                    onTouchStart={() => {
-                      longPressTimer.current = setTimeout(() => setPriorityPopup(i), 500);
-                    }}
-                    onTouchEnd={() => { if (longPressTimer.current) clearTimeout(longPressTimer.current); }}
+                    onDoubleClick={(e) => { e.preventDefault(); setPriorityPopup(i); }}
                   >
                     {[0, 1, 2].map(d => (
                       <div key={d} style={{ width: 3, height: 3, borderRadius: "50%", background: "rgba(255,79,216,0.35)" }} />
