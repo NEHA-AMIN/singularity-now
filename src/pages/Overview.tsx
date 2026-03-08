@@ -273,13 +273,55 @@ const Overview = () => {
                 <span style={{ fontFamily: "'Raleway',sans-serif", fontSize: 9, fontWeight: 600, color: "#9AA3B2", letterSpacing: 1 }}>CAPTURE BOX</span>
               </div>
               {notes.map((note, i) => (
-                <div key={i} style={{
+                <div key={`note-${i}`} style={{
                   padding: "8px 0",
                   borderBottom: i < notes.length - 1 ? "1px solid rgba(255,79,216,0.08)" : "none",
+                  display: "flex", alignItems: "center", gap: 8,
                 }}>
+                  <div
+                    onClick={() => {
+                      setNotes(prev => prev.filter((_, idx) => idx !== i));
+                      setReviewed(prev => [...prev, note]);
+                    }}
+                    style={{
+                      width: 16, height: 16, borderRadius: 4, flexShrink: 0, cursor: "pointer",
+                      border: "1.5px solid rgba(255,79,216,0.4)", background: "transparent",
+                      transition: "background 0.2s ease, border-color 0.2s ease",
+                    }}
+                  />
                   <div style={{ fontFamily: "'Caveat',cursive", fontSize: 15, fontWeight: 400, color: "#FF4FD8", lineHeight: 1.4, textShadow: "0 0 6px rgba(255,79,216,0.1)" }}>{note}</div>
                 </div>
               ))}
+
+              {/* REVIEWED SECTION */}
+              {reviewed.length > 0 && (
+                <>
+                  <div style={{
+                    marginTop: 14, paddingTop: 10,
+                    borderTop: "1px solid rgba(255,79,216,0.15)",
+                    fontFamily: "'Raleway',sans-serif", fontSize: 9, fontWeight: 600,
+                    color: "rgba(255,79,216,0.4)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 8,
+                  }}>Reviewed</div>
+                  {reviewed.map((note, i) => (
+                    <div key={`rev-${i}`} style={{
+                      padding: "5px 0", display: "flex", alignItems: "center", gap: 8,
+                      borderBottom: i < reviewed.length - 1 ? "1px solid rgba(255,79,216,0.04)" : "none",
+                    }}>
+                      <div style={{
+                        width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+                        border: "1.5px solid rgba(57,208,255,0.3)", background: "rgba(57,208,255,0.12)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        <span style={{ fontSize: 9, color: "#39D0FF" }}>✓</span>
+                      </div>
+                      <div style={{
+                        fontFamily: "'Caveat',cursive", fontSize: 14, fontWeight: 400,
+                        color: "rgba(255,79,216,0.3)", lineHeight: 1.4, textDecoration: "line-through",
+                      }}>{note}</div>
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
 
             {/* NOTE MODAL */}
