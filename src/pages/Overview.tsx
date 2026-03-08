@@ -16,7 +16,19 @@ const SPRINT_LOG: Record<string, number> = {
 const dk = (y: number, m: number, d: number) =>
   `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 
+const INITIAL_NOTES = [
+  "Look into LoRA fine-tuning...",
+  "TensorTonic ep. on eigenvalues",
+  "Baishali email re: conference",
+  "New SHAP visualization idea",
+  "Chinmay — schedule lock-in",
+  "Read RoPE paper by Su et al.",
+];
+
 const Overview = () => {
+  const [notes, setNotes] = useState<string[]>(INITIAL_NOTES);
+  const [showNoteModal, setShowNoteModal] = useState(false);
+  const [newNote, setNewNote] = useState("");
   const navigate = useNavigate();
   const now = new Date();
   const year = now.getFullYear(), month = now.getMonth(), today = now.getDate();
