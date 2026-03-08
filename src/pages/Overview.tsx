@@ -271,7 +271,21 @@ const Overview = () => {
           <div className="los-grid3" style={{ marginBottom: 14 }}>
             {/* TODAY'S SCHEDULE */}
             <div className="los-card bc">
-              <div className="los-h">Today's Schedule</div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div className="los-h" style={{ marginBottom: 0 }}>Today's Schedule</div>
+                <button
+                  style={{
+                    width: 28, height: 28, borderRadius: "50%",
+                    background: "rgba(57,208,255,0.12)", border: "1px solid rgba(57,208,255,0.35)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    cursor: "pointer", fontSize: 16, color: "#39D0FF", marginBottom: 14,
+                    transition: "box-shadow 0.3s ease, background 0.3s ease",
+                    boxShadow: "0 0 8px rgba(57,208,255,0.15)",
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 0 16px rgba(57,208,255,0.4)"; e.currentTarget.style.background = "rgba(57,208,255,0.2)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 0 8px rgba(57,208,255,0.15)"; e.currentTarget.style.background = "rgba(57,208,255,0.12)"; }}
+                >+</button>
+              </div>
               {[
                 { t: "05:00 AM", n: "MATH SPRINT (45m)", d: "Linear algebra deep focus", ic: "📐", c: "#39D0FF" },
                 { t: "06:00 AM", n: "GRL WRITING (45m)", d: "Discussion section draft", ic: "📝", c: "#8B5CFF" },
