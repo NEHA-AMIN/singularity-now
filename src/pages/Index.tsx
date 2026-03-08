@@ -72,7 +72,7 @@ const Index = () => {
           >
             <div style={{ position: "absolute", top: -1, right: -1, width: 10, height: 10, borderTop: "2px solid rgba(139,92,246,0.5)", borderRight: "2px solid rgba(139,92,246,0.5)", borderTopRightRadius: 10 }} />
             <div style={{ position: "absolute", bottom: -1, left: -1, width: 10, height: 10, borderBottom: "2px solid rgba(139,92,246,0.5)", borderLeft: "2px solid rgba(139,92,246,0.5)", borderBottomLeftRadius: 10 }} />
-            GOAL
+            PLAY
           </button>
         </div>
 
