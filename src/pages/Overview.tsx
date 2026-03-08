@@ -427,11 +427,8 @@ const Overview = () => {
                                 fontFamily: "'Raleway', sans-serif",
                                 background: isHover || isActive ? btn.tint : "rgba(255,255,255,0.04)",
                                 backdropFilter: "blur(20px) saturate(1.4)", WebkitBackdropFilter: "blur(20px) saturate(1.4)",
-                                boxShadow: isHover
-                                  ? "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)"
-                                  : "0 4px 16px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06)",
+                                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
                                 transition: "all 0.35s cubic-bezier(0.4,0,0.2,1)",
-                                transform: isHover ? "translateY(-1px)" : "translateY(0)",
                               }}>
                                 {/* Top refraction */}
                                 <div style={{
