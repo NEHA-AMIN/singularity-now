@@ -36,11 +36,10 @@ const LevelBar = () => (
         />
       ))}
       <div style={{ fontFamily: "'Cormorant', serif", fontSize: 14, fontWeight: 500, color: "#c4b5fd", letterSpacing: 1 }}>
-        DPS<span style={{ color: "rgba(255,255,255,0.3)", margin: "0 4px" }}>=</span>
-        <span style={{ color: "#e8e4f0" }}>4636</span>
-        <span style={{ color: "rgba(255,255,255,0.2)" }}>/0</span>
+        GYM<span style={{ color: "rgba(255,255,255,0.3)", margin: "0 4px" }}>—</span>
+        <span style={{ color: "#e8e4f0" }}>1 Hour</span>
       </div>
-      <div style={{ fontFamily: "'Cinzel', serif", fontSize: 12, fontWeight: 600, color: "#fbbf24", letterSpacing: 3 }}>COINS</div>
+      <div style={{ fontFamily: "'Cinzel', serif", fontSize: 12, fontWeight: 600, color: "#fbbf24", letterSpacing: 3 }}>MICRON</div>
     </div>
   </div>
 );
