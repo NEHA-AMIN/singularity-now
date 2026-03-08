@@ -309,12 +309,6 @@ const Overview = () => {
                       display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10,
                     }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        {/* Priority dot */}
-                        <div style={{
-                          width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
-                          background: cat.fc,
-                          boxShadow: `0 0 6px ${cat.fc}88, 0 0 12px ${cat.fc}44`,
-                        }} />
                         <svg width="14" height="12" viewBox="0 0 14 12" fill="none" style={{ flexShrink: 0 }}>
                           <path d="M1 3V10C1 10.55 1.45 11 2 11H12C12.55 11 13 10.55 13 10V4C13 3.45 12.55 3 12 3H7L5.5 1H2C1.45 1 1 1.45 1 2V3Z" fill={cat.fc} opacity="0.8"/>
                         </svg>
