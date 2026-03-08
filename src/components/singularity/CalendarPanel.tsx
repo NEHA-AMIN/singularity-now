@@ -86,7 +86,7 @@ const CalendarPanel = () => {
                 width: 22, height: 18, borderRadius: 3, border: "none",
                 background: calView === key ? "rgba(139,92,246,0.25)" : "rgba(255,255,255,0.03)",
                 color: calView === key ? "#c4b5fd" : "rgba(255,255,255,0.2)",
-                fontFamily: "'Rajdhani', sans-serif", fontSize: 9, fontWeight: 600,
+                fontFamily: "'Cormorant', serif", fontSize: 9, fontWeight: 500,
                 cursor: "pointer", letterSpacing: 0.5,
               }}>{v}</button>
             );
