@@ -109,7 +109,21 @@ const Overview = () => {
   const [projectMenu, setProjectMenu] = useState<{ catKey: string; idx: number } | null>(null);
   const [projectAttachments, setProjectAttachments] = useState<Record<string, string[]>>({});
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const now = new Date();
+
+  // Schedule state
+  const [scheduleItems, setScheduleItems] = useState([
+    { t: "05:00 AM", n: "MATH SPRINT", d: "Linear algebra deep focus", dur: "45m", ic: "📐", c: "#39D0FF" },
+    { t: "06:00 AM", n: "GRL WRITING", d: "Discussion section draft", dur: "45m", ic: "📝", c: "#8B5CFF" },
+    { t: "09:00 AM", n: "IBM ISL WORK", d: "Daily high-visibility output", dur: "2h", ic: "💼", c: "#39D0FF" },
+    { t: "11:30 AM", n: "NEURIPS EXP.", d: "Positional encoding tests", dur: "45m", ic: "🔬", c: "#8B5CFF" },
+    { t: "06:00 PM", n: "GYM SESSION", d: "Evening training — calisthenics", dur: "1h", ic: "🏋", c: "#FF8A3D" },
+  ]);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [schedForm, setSchedForm] = useState({ time: "", title: "", duration: "", desc: "", emoji: "⭐" });
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  const EMOJI_OPTIONS = ["📐","📝","💼","🔬","🏋","📖","🧘","🏃","💻","🎯","🎨","🎵","🍎","☕","🌙","⚡","🔥","💡","🚀","🎤"];
+  const SCHED_COLORS = ["#39D0FF","#8B5CFF","#FF8A3D","#FF4FD8","#4ade80"];
   const year = now.getFullYear(), month = now.getMonth(), today = now.getDate();
   const monthName = now.toLocaleString("default", { month: "long" });
   const dayName = now.toLocaleString("default", { weekday: "short" }).toUpperCase();
