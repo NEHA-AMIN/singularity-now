@@ -38,10 +38,22 @@ const CalendarPanel = () => {
         const isToday = day === today;
         return (
           <div key={i} style={{
-            aspectRatio: "1", borderRadius: 3, display: "flex", flexDirection: "column",
+            aspectRatio: "1", borderRadius: 5, display: "flex", flexDirection: "column",
             alignItems: "center", justifyContent: "center",
-            background: done ? "rgba(168,85,247,0.12)" : isToday ? "rgba(139,92,246,0.08)" : "rgba(255,255,255,0.01)",
-            border: done ? "1px solid rgba(168,85,247,0.35)" : isToday ? "1px solid rgba(139,92,246,0.3)" : "1px solid rgba(255,255,255,0.03)",
+            background: done
+              ? "linear-gradient(135deg, rgba(139,92,246,0.18), rgba(168,85,247,0.08))"
+              : isToday
+                ? "rgba(139,92,246,0.06)"
+                : "rgba(255,255,255,0.015)",
+            border: done
+              ? "1px solid rgba(168,85,247,0.35)"
+              : isToday
+                ? "1px solid rgba(139,92,246,0.3)"
+                : "1px solid rgba(255,255,255,0.03)",
+            boxShadow: done
+              ? "0 0 8px rgba(139,92,246,0.12), inset 0 0 6px rgba(139,92,246,0.06)"
+              : "none",
+            backdropFilter: done ? "blur(4px)" : "none",
           }}>
             <span style={{
               fontFamily: "'Cormorant', serif", fontSize: calView === "weekly" ? 14 : 11,
@@ -62,14 +74,7 @@ const CalendarPanel = () => {
   );
 
   return (
-    <div
-      style={{
-        flex: 1.3,
-        background: "linear-gradient(180deg, rgba(22,16,40,0.85), rgba(14,10,28,0.9))",
-        border: "1.5px solid rgba(100,70,160,0.25)",
-        borderRadius: 12, padding: "12px 10px", position: "relative",
-      }}
-    >
+    <div className="glass-card" style={{ flex: 1.3, padding: "12px 10px" }}>
       {/* Mini spikes */}
       <svg viewBox="0 0 200 8" style={{ position: "absolute", top: -5, left: 20, right: 20, width: "calc(100% - 40px)", height: 8 }}>
         <path d="M0,8 L20,8 L25,2 L30,8 L50,8 L55,3 L60,8 L80,8 L85,0 L90,8 L110,8 L115,3 L120,8 L140,8 L145,2 L150,8 L170,8 L175,3 L180,8 L200,8" fill="none" stroke="rgba(139,92,246,0.25)" strokeWidth="0.8" />
@@ -82,12 +87,13 @@ const CalendarPanel = () => {
           {(["W", "M", "D"] as const).map((v, i) => {
             const key = (["weekly", "monthly", "daily"] as const)[i];
             return (
-              <button key={v} onClick={() => setCalView(key)} style={{
-                width: 22, height: 18, borderRadius: 3, border: "none",
-                background: calView === key ? "rgba(139,92,246,0.25)" : "rgba(255,255,255,0.03)",
+              <button key={v} onClick={() => setCalView(key)} className="glass-icon" style={{
+                width: 22, height: 18,
+                background: calView === key ? "rgba(139,92,246,0.2)" : "rgba(255,255,255,0.02)",
                 color: calView === key ? "#c4b5fd" : "rgba(255,255,255,0.2)",
                 fontFamily: "'Cormorant', serif", fontSize: 9, fontWeight: 500,
                 cursor: "pointer", letterSpacing: 0.5,
+                border: calView === key ? "1px solid rgba(139,92,246,0.3)" : "1px solid rgba(255,255,255,0.04)",
               }}>{v}</button>
             );
           })}
@@ -114,12 +120,7 @@ const CalendarPanel = () => {
           <div style={{ fontFamily: "'Cormorant', serif", fontSize: 12, fontWeight: 400, color: "rgba(255,255,255,0.35)", letterSpacing: 3, marginTop: 4, textTransform: "uppercase" }}>
             {now.toLocaleString("default", { weekday: "long" })}
           </div>
-          <div style={{
-            marginTop: 12, padding: "8px 12px",
-            background: SPRINT_LOG[dk(year, month, today)] ? "rgba(168,85,247,0.1)" : "rgba(255,255,255,0.02)",
-            border: `1px solid ${SPRINT_LOG[dk(year, month, today)] ? "rgba(168,85,247,0.3)" : "rgba(255,255,255,0.05)"}`,
-            borderRadius: 6,
-          }}>
+          <div className="glass-badge" style={{ marginTop: 12, padding: "8px 12px" }}>
             <span style={{ fontFamily: "'Cormorant', serif", fontSize: 13, fontWeight: 400, color: SPRINT_LOG[dk(year, month, today)] ? "#c084fc" : "rgba(255,255,255,0.3)" }}>
               {SPRINT_LOG[dk(year, month, today)] ? `${SPRINT_LOG[dk(year, month, today)]} sprints completed` : "No sprints yet"}
             </span>

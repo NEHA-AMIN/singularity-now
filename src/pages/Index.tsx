@@ -29,24 +29,19 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex justify-center" style={{ background: "#08060c" }}>
-      {/* GOD QUOTE OVERLAY */}
       {showGod && <GodQuoteOverlay onDismiss={() => setShowGod(false)} quote={todayQuote} />}
-
-      {/* SANCTUARY OVERLAY */}
       {showSanctuary && <SanctuaryOverlay onDismiss={() => setShowSanctuary(false)} />}
 
-      {/* MAIN FRAME */}
       <div className="w-full relative" style={{ maxWidth: 400, background: "#0a0814", minHeight: "100vh" }}>
         <GothicTopBorder />
 
         {/* SHIVA BUTTON */}
         <button
           onClick={() => setShowSanctuary(true)}
-          className="absolute z-10 flex items-center"
+          className="absolute z-10 flex items-center glass-icon"
           style={{
             top: 48, right: 12,
-            background: "rgba(125,211,252,0.04)", border: "1px solid rgba(125,211,252,0.12)",
-            borderRadius: 8, padding: "5px 8px", cursor: "pointer",
+            padding: "5px 8px", cursor: "pointer",
             animation: "shivaGlow 3s infinite",
           }}
         >
@@ -66,12 +61,11 @@ const Index = () => {
         {/* GOAL BUTTON */}
         <div className="flex justify-center" style={{ padding: "16px 14px 8px" }}>
           <button
+            className="glass-button"
             style={{
               fontFamily: "'Cinzel', serif", fontSize: 14, fontWeight: 700,
               color: "#c4b5fd", letterSpacing: 5,
-              background: "linear-gradient(135deg, rgba(22,16,40,0.9), rgba(14,10,28,0.95))",
-              border: "1.5px solid rgba(100,70,160,0.35)",
-              borderRadius: 10, padding: "12px 32px",
+              padding: "12px 32px",
               cursor: "pointer", animation: "playGlow 3s infinite",
               textTransform: "uppercase", position: "relative",
             }}
