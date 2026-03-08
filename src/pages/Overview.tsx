@@ -348,6 +348,12 @@ const Overview = () => {
                               </svg>
                               <span style={{ fontFamily: "'Raleway',sans-serif", fontSize: 11, fontWeight: 500, color: "#E8ECF4", letterSpacing: 0.5 }}>{projName}</span>
                             </div>
+                            <div style={{
+                              background: cat.g, borderRadius: 14, padding: "3px 12px",
+                              fontFamily: "'Raleway',sans-serif", fontSize: 8, fontWeight: 700,
+                              color: "#fff", letterSpacing: 1.2, textTransform: "uppercase",
+                              whiteSpace: "nowrap", flexShrink: 0,
+                            }}>{cat.s}</div>
                           </div>
 
                           {/* Attachment thumbnails */}
