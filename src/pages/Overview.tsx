@@ -109,6 +109,21 @@ const Overview = () => {
   const [projectMenu, setProjectMenu] = useState<{ catKey: string; idx: number } | null>(null);
   const [projectAttachments, setProjectAttachments] = useState<Record<string, string[]>>({});
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Schedule state
+  const [scheduleItems, setScheduleItems] = useState([
+    { t: "05:00 AM", n: "MATH SPRINT", d: "Linear algebra deep focus", dur: "45m", ic: "📐", c: "#39D0FF" },
+    { t: "06:00 AM", n: "GRL WRITING", d: "Discussion section draft", dur: "45m", ic: "📝", c: "#8B5CFF" },
+    { t: "09:00 AM", n: "IBM ISL WORK", d: "Daily high-visibility output", dur: "2h", ic: "💼", c: "#39D0FF" },
+    { t: "11:30 AM", n: "NEURIPS EXP.", d: "Positional encoding tests", dur: "45m", ic: "🔬", c: "#8B5CFF" },
+    { t: "06:00 PM", n: "GYM SESSION", d: "Evening training — calisthenics", dur: "1h", ic: "🏋", c: "#FF8A3D" },
+  ]);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [schedForm, setSchedForm] = useState({ time: "", title: "", duration: "", desc: "", emoji: "⭐" });
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  const EMOJI_OPTIONS = ["📐","📝","💼","🔬","🏋","📖","🧘","🏃","💻","🎯","🎨","🎵","🍎","☕","🌙","⚡","🔥","💡","🚀","🎤"];
+  const SCHED_COLORS = ["#39D0FF","#8B5CFF","#FF8A3D","#FF4FD8","#4ade80"];
   const now = new Date();
   const year = now.getFullYear(), month = now.getMonth(), today = now.getDate();
   const monthName = now.toLocaleString("default", { month: "long" });
@@ -282,29 +297,186 @@ const Overview = () => {
                     transition: "box-shadow 0.3s ease, background 0.3s ease",
                     boxShadow: "0 0 8px rgba(57,208,255,0.15)",
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 0 16px rgba(57,208,255,0.4)"; e.currentTarget.style.background = "rgba(57,208,255,0.2)"; }}
+                  onClick={() => { setShowScheduleModal(true); setSchedForm({ time: "", title: "", duration: "", desc: "", emoji: "⭐" }); setShowEmojiPicker(false); }}
                   onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 0 8px rgba(57,208,255,0.15)"; e.currentTarget.style.background = "rgba(57,208,255,0.12)"; }}
                 >+</button>
               </div>
-              {[
-                { t: "05:00 AM", n: "MATH SPRINT (45m)", d: "Linear algebra deep focus", ic: "📐", c: "#39D0FF" },
-                { t: "06:00 AM", n: "GRL WRITING (45m)", d: "Discussion section draft", ic: "📝", c: "#8B5CFF" },
-                { t: "09:00 AM", n: "IBM ISL WORK (2h)", d: "Daily high-visibility output", ic: "💼", c: "#39D0FF" },
-                { t: "11:30 AM", n: "NEURIPS EXP. (45m)", d: "Positional encoding tests", ic: "🔬", c: "#8B5CFF" },
-                { t: "06:00 PM", n: "GYM SESSION (1h)", d: "Evening training — calisthenics", ic: "🏋", c: "#FF8A3D" },
-              ].map((s, i) => (
+              {scheduleItems.map((s, i) => (
                 <div key={i} style={{ display: "flex", gap: 10, marginBottom: 12, alignItems: "flex-start" }}>
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0 }}>
                     <div style={{ width: 28, height: 28, borderRadius: "50%", background: `${s.c}15`, border: `1.5px solid ${s.c}44`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>{s.ic}</div>
-                    {i < 4 && <div style={{ width: 1.5, height: 16, background: `linear-gradient(180deg,${s.c}44,transparent)` }} />}
+                    {i < scheduleItems.length - 1 && <div style={{ width: 1.5, height: 16, background: `linear-gradient(180deg,${s.c}44,transparent)` }} />}
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontFamily: "'Raleway',sans-serif", fontSize: 9, fontWeight: 500, color: s.c, letterSpacing: 0.5 }}>{s.t}</div>
-                    <div style={{ fontFamily: "'Raleway',sans-serif", fontSize: 12, fontWeight: 500, color: "#E8ECF4" }}>{s.n}</div>
+                    <div style={{ fontFamily: "'Raleway',sans-serif", fontSize: 12, fontWeight: 500, color: "#E8ECF4" }}>{s.n} ({s.dur})</div>
                     <div style={{ fontFamily: "'Raleway',sans-serif", fontSize: 9, fontWeight: 400, color: "#9AA3B2", marginTop: 1 }}>{s.d}</div>
                   </div>
                 </div>
               ))}
+
+              {/* SCHEDULE ADD MODAL */}
+              {showScheduleModal && (
+                <div
+                  onClick={() => setShowScheduleModal(false)}
+                  style={{
+                    position: "fixed", inset: 0, zIndex: 9999,
+                    background: "rgba(0,0,0,0.7)", backdropFilter: "blur(6px)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}
+                >
+                  <div
+                    onClick={e => e.stopPropagation()}
+                    style={{
+                      width: 360, background: "#0a0a14",
+                      border: "1px solid rgba(57,208,255,0.3)", borderRadius: 16,
+                      padding: 24, boxShadow: "0 0 40px rgba(57,208,255,0.15)",
+                      animation: "slideAppend 0.35s cubic-bezier(0.22,1,0.36,1) forwards",
+                    }}
+                  >
+                    <div style={{ fontFamily: "'Raleway',sans-serif", fontSize: 14, fontWeight: 600, color: "#E8ECF4", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 18 }}>Add Schedule Item</div>
+
+                    {/* Emoji picker */}
+                    <div style={{ marginBottom: 14 }}>
+                      <div style={{ fontFamily: "'Raleway',sans-serif", fontSize: 9, fontWeight: 600, color: "#9AA3B2", letterSpacing: 1, marginBottom: 6 }}>EMOJI</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div
+                          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                          style={{
+                            width: 40, height: 40, borderRadius: 10, cursor: "pointer",
+                            background: "rgba(57,208,255,0.08)", border: "1px solid rgba(57,208,255,0.25)",
+                            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20,
+                            transition: "border-color 0.2s ease",
+                          }}
+                        >{schedForm.emoji}</div>
+                        <span style={{ fontFamily: "'Raleway',sans-serif", fontSize: 10, color: "#9AA3B2" }}>Click to change</span>
+                      </div>
+                      {showEmojiPicker && (
+                        <div style={{
+                          display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8,
+                          background: "rgba(255,255,255,0.03)", borderRadius: 10, padding: 8,
+                          border: "1px solid rgba(57,208,255,0.15)",
+                        }}>
+                          {EMOJI_OPTIONS.map(em => (
+                            <div
+                              key={em}
+                              onClick={() => { setSchedForm(f => ({ ...f, emoji: em })); setShowEmojiPicker(false); }}
+                              style={{
+                                width: 32, height: 32, borderRadius: 6, cursor: "pointer",
+                                display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16,
+                                background: schedForm.emoji === em ? "rgba(57,208,255,0.15)" : "transparent",
+                                border: schedForm.emoji === em ? "1px solid rgba(57,208,255,0.4)" : "1px solid transparent",
+                                transition: "background 0.15s ease",
+                              }}
+                              onMouseEnter={e => e.currentTarget.style.background = "rgba(57,208,255,0.1)"}
+                              onMouseLeave={e => { if (schedForm.emoji !== em) e.currentTarget.style.background = "transparent"; }}
+                            >{em}</div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Time input */}
+                    <div style={{ marginBottom: 12 }}>
+                      <div style={{ fontFamily: "'Raleway',sans-serif", fontSize: 9, fontWeight: 600, color: "#9AA3B2", letterSpacing: 1, marginBottom: 6 }}>TIME</div>
+                      <input
+                        value={schedForm.time}
+                        onChange={e => setSchedForm(f => ({ ...f, time: e.target.value }))}
+                        placeholder="e.g. 08:00 AM"
+                        style={{
+                          width: "100%", height: 40, background: "rgba(255,255,255,0.04)",
+                          border: "1px solid rgba(57,208,255,0.2)", borderRadius: 10,
+                          padding: "0 14px", color: "#E8ECF4", fontFamily: "'Raleway',sans-serif", fontSize: 13,
+                          outline: "none",
+                        }}
+                        onFocus={e => e.currentTarget.style.borderColor = "#39D0FF"}
+                        onBlur={e => e.currentTarget.style.borderColor = "rgba(57,208,255,0.2)"}
+                      />
+                    </div>
+
+                    {/* Title + Duration row */}
+                    <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+                      <div style={{ flex: 2 }}>
+                        <div style={{ fontFamily: "'Raleway',sans-serif", fontSize: 9, fontWeight: 600, color: "#9AA3B2", letterSpacing: 1, marginBottom: 6 }}>TITLE</div>
+                        <input
+                          autoFocus
+                          value={schedForm.title}
+                          onChange={e => setSchedForm(f => ({ ...f, title: e.target.value }))}
+                          placeholder="e.g. Deep Work"
+                          style={{
+                            width: "100%", height: 40, background: "rgba(255,255,255,0.04)",
+                            border: "1px solid rgba(57,208,255,0.2)", borderRadius: 10,
+                            padding: "0 14px", color: "#E8ECF4", fontFamily: "'Raleway',sans-serif", fontSize: 13,
+                            outline: "none",
+                          }}
+                          onFocus={e => e.currentTarget.style.borderColor = "#39D0FF"}
+                          onBlur={e => e.currentTarget.style.borderColor = "rgba(57,208,255,0.2)"}
+                          onKeyDown={e => {
+                            if (e.key === "Enter" && schedForm.title.trim() && schedForm.time.trim()) {
+                              const color = SCHED_COLORS[scheduleItems.length % SCHED_COLORS.length];
+                              setScheduleItems(prev => [...prev, {
+                                t: schedForm.time.trim(), n: schedForm.title.trim().toUpperCase(),
+                                d: schedForm.desc.trim() || "", dur: schedForm.duration.trim() || "—",
+                                ic: schedForm.emoji, c: color,
+                              }]);
+                              setShowScheduleModal(false);
+                            }
+                          }}
+                        />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontFamily: "'Raleway',sans-serif", fontSize: 9, fontWeight: 600, color: "#9AA3B2", letterSpacing: 1, marginBottom: 6 }}>DURATION</div>
+                        <input
+                          value={schedForm.duration}
+                          onChange={e => setSchedForm(f => ({ ...f, duration: e.target.value }))}
+                          placeholder="e.g. 1h"
+                          style={{
+                            width: "100%", height: 40, background: "rgba(255,255,255,0.04)",
+                            border: "1px solid rgba(57,208,255,0.2)", borderRadius: 10,
+                            padding: "0 14px", color: "#E8ECF4", fontFamily: "'Raleway',sans-serif", fontSize: 13,
+                            outline: "none",
+                          }}
+                          onFocus={e => e.currentTarget.style.borderColor = "#39D0FF"}
+                          onBlur={e => e.currentTarget.style.borderColor = "rgba(57,208,255,0.2)"}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Buttons */}
+                    <div style={{ display: "flex", gap: 10, marginTop: 18, justifyContent: "flex-end" }}>
+                      <button
+                        onClick={() => setShowScheduleModal(false)}
+                        style={{
+                          fontFamily: "'Raleway',sans-serif", fontSize: 11, fontWeight: 600,
+                          color: "#9AA3B2", background: "rgba(255,255,255,0.05)",
+                          border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8,
+                          padding: "8px 18px", cursor: "pointer", letterSpacing: 1,
+                        }}
+                      >CANCEL</button>
+                      <button
+                        onClick={() => {
+                          if (schedForm.title.trim() && schedForm.time.trim()) {
+                            const color = SCHED_COLORS[scheduleItems.length % SCHED_COLORS.length];
+                            setScheduleItems(prev => [...prev, {
+                              t: schedForm.time.trim(), n: schedForm.title.trim().toUpperCase(),
+                              d: schedForm.desc.trim() || "", dur: schedForm.duration.trim() || "—",
+                              ic: schedForm.emoji, c: color,
+                            }]);
+                            setShowScheduleModal(false);
+                          }
+                        }}
+                        style={{
+                          fontFamily: "'Raleway',sans-serif", fontSize: 11, fontWeight: 600,
+                          color: "#fff", background: "linear-gradient(90deg,#39D0FF,#8B5CFF)",
+                          border: "none", borderRadius: 8,
+                          padding: "8px 18px", cursor: "pointer", letterSpacing: 1,
+                          boxShadow: "0 0 12px rgba(57,208,255,0.3)",
+                        }}
+                      >ADD</button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* ACTIVE PROJECTS */}
