@@ -300,29 +300,109 @@ const Overview = () => {
                     setDragOverIdx(null);
                   }}
                   style={{
-                    padding: "8px 0",
+                    padding: "8px 4px",
                     borderBottom: i < notes.length - 1 ? "1px solid rgba(255,79,216,0.08)" : "none",
                     display: "flex", alignItems: "center", gap: 8,
                     opacity: dragIdx === i ? 0.4 : 1,
-                    background: dragOverIdx === i && dragIdx !== i ? "rgba(255,79,216,0.06)" : "transparent",
+                    background: dragOverIdx === i && dragIdx !== i
+                      ? "rgba(255,79,216,0.06)"
+                      : priorities[i]
+                        ? PRIORITY_COLORS[priorities[i]]?.bg ?? "transparent"
+                        : "transparent",
+                    border: priorities[i] ? `1px solid ${PRIORITY_COLORS[priorities[i]]?.border ?? "transparent"}` : "1px solid transparent",
                     borderRadius: 6,
-                    transition: "background 0.15s ease, opacity 0.15s ease",
+                    transition: "background 0.15s ease, opacity 0.15s ease, border-color 0.15s ease",
+                    position: "relative",
                   }}
                 >
-                  {/* Drag handle */}
-                  <div style={{
-                    cursor: "grab", flexShrink: 0, display: "flex", flexDirection: "column",
-                    alignItems: "center", justifyContent: "center", gap: 2, padding: "0 2px",
-                  }}>
+                  {/* Drag handle with long-press */}
+                  <div
+                    style={{
+                      cursor: "grab", flexShrink: 0, display: "flex", flexDirection: "column",
+                      alignItems: "center", justifyContent: "center", gap: 2, padding: "4px 4px",
+                      borderRadius: 4,
+                    }}
+                    onMouseDown={() => {
+                      longPressTimer.current = setTimeout(() => setPriorityPopup(i), 500);
+                    }}
+                    onMouseUp={() => { if (longPressTimer.current) clearTimeout(longPressTimer.current); }}
+                    onMouseLeave={() => { if (longPressTimer.current) clearTimeout(longPressTimer.current); }}
+                    onTouchStart={() => {
+                      longPressTimer.current = setTimeout(() => setPriorityPopup(i), 500);
+                    }}
+                    onTouchEnd={() => { if (longPressTimer.current) clearTimeout(longPressTimer.current); }}
+                  >
                     {[0, 1, 2].map(d => (
                       <div key={d} style={{ width: 3, height: 3, borderRadius: "50%", background: "rgba(255,79,216,0.35)" }} />
                     ))}
                   </div>
+
+                  {/* Priority popup */}
+                  {priorityPopup === i && (
+                    <>
+                      <div onClick={() => setPriorityPopup(null)} style={{ position: "fixed", inset: 0, zIndex: 99 }} />
+                      <div style={{
+                        position: "absolute", left: 24, top: -4, zIndex: 100,
+                        background: "#12101e", border: "1px solid rgba(255,79,216,0.25)",
+                        borderRadius: 10, padding: 6, display: "flex", flexDirection: "column", gap: 2,
+                        boxShadow: "0 4px 20px rgba(0,0,0,0.6), 0 0 15px rgba(255,79,216,0.1)",
+                        minWidth: 130,
+                      }}>
+                        {Object.entries(PRIORITY_COLORS).map(([key, val]) => (
+                          <button
+                            key={key}
+                            onClick={() => {
+                              setPriorities(prev => ({ ...prev, [i]: key }));
+                              setPriorityPopup(null);
+                            }}
+                            style={{
+                              background: priorities[i] === key ? val.bg : "transparent",
+                              border: "none", borderRadius: 6, padding: "6px 10px",
+                              fontFamily: "'Raleway',sans-serif", fontSize: 11, fontWeight: 500,
+                              color: "#E8ECF4", cursor: "pointer", textAlign: "left",
+                              transition: "background 0.15s ease",
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = val.bg}
+                            onMouseLeave={e => { if (priorities[i] !== key) e.currentTarget.style.background = "transparent"; }}
+                          >
+                            {val.label}
+                          </button>
+                        ))}
+                        {priorities[i] && (
+                          <button
+                            onClick={() => {
+                              setPriorities(prev => { const n = { ...prev }; delete n[i]; return n; });
+                              setPriorityPopup(null);
+                            }}
+                            style={{
+                              background: "transparent", border: "none", borderRadius: 6,
+                              padding: "6px 10px", fontFamily: "'Raleway',sans-serif", fontSize: 10,
+                              fontWeight: 500, color: "#9AA3B2", cursor: "pointer", textAlign: "left",
+                              borderTop: "1px solid rgba(255,255,255,0.06)", marginTop: 2,
+                            }}
+                          >
+                            ✕ Clear
+                          </button>
+                        )}
+                      </div>
+                    </>
+                  )}
+
                   {/* Checkbox */}
                   <div
                     onClick={() => {
                       setNotes(prev => prev.filter((_, idx) => idx !== i));
                       setReviewed(prev => [...prev, note]);
+                      // Shift priority keys
+                      setPriorities(prev => {
+                        const updated: Record<number, string> = {};
+                        Object.entries(prev).forEach(([k, v]) => {
+                          const idx = Number(k);
+                          if (idx < i) updated[idx] = v;
+                          else if (idx > i) updated[idx - 1] = v;
+                        });
+                        return updated;
+                      });
                     }}
                     style={{
                       width: 16, height: 16, borderRadius: 4, flexShrink: 0, cursor: "pointer",
