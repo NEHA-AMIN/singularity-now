@@ -304,11 +304,18 @@ const Overview = () => {
                       padding: "5px 0", display: "flex", alignItems: "center", gap: 8,
                       borderBottom: i < reviewed.length - 1 ? "1px solid rgba(255,79,216,0.04)" : "none",
                     }}>
-                      <div style={{
-                        width: 16, height: 16, borderRadius: 4, flexShrink: 0,
-                        border: "1.5px solid rgba(57,208,255,0.3)", background: "rgba(57,208,255,0.12)",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                      }}>
+                      <div
+                        onClick={() => {
+                          setReviewed(prev => prev.filter((_, idx) => idx !== i));
+                          setNotes(prev => [...prev, note]);
+                        }}
+                        style={{
+                          width: 16, height: 16, borderRadius: 4, flexShrink: 0, cursor: "pointer",
+                          border: "1.5px solid rgba(57,208,255,0.3)", background: "rgba(57,208,255,0.12)",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          transition: "background 0.2s ease",
+                        }}
+                      >
                         <span style={{ fontSize: 9, color: "#39D0FF" }}>✓</span>
                       </div>
                       <div style={{
