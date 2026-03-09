@@ -468,15 +468,36 @@ const Overview = () => {
                           padding: "8px 18px", cursor: "pointer", letterSpacing: 1,
                         }}
                       >CANCEL</button>
+                      {editingScheduleIdx !== null && (
+                        <button
+                          onClick={() => {
+                            setScheduleItems(prev => {
+                              const newItems = [...prev];
+                              newItems[editingScheduleIdx] = { ...newItems[editingScheduleIdx], done: true };
+                              const item = newItems.splice(editingScheduleIdx, 1)[0];
+                              newItems.push(item);
+                              return newItems;
+                            });
+                            setShowScheduleModal(false);
+                          }}
+                          style={{
+                            fontFamily: "'Raleway',sans-serif", fontSize: 11, fontWeight: 600,
+                            color: "#fff", background: "linear-gradient(90deg,#4ade80,#22c55e)",
+                            border: "none", borderRadius: 8,
+                            padding: "8px 18px", cursor: "pointer", letterSpacing: 1,
+                            boxShadow: "0 0 12px rgba(74,222,128,0.3)",
+                          }}
+                        >DONE</button>
+                      )}
                       <button
                         onClick={() => {
                           if (schedForm.title.trim() && schedForm.time.trim()) {
-                            const color = SCHED_COLORS[scheduleItems.length % SCHED_COLORS.length];
-                            setScheduleItems(prev => [...prev, {
-                              t: schedForm.time.trim(), n: schedForm.title.trim().toUpperCase(),
-                              d: schedForm.desc.trim() || "", dur: schedForm.duration.trim() || "—",
-                              ic: schedForm.emoji, c: color,
-                            }]);
+                            if (editingScheduleIdx !== null) {
+                              setScheduleItems(prev => prev.map((item, idx) => idx === editingScheduleIdx ? { ...item, t: schedForm.time.trim(), n: schedForm.title.trim().toUpperCase(), d: schedForm.desc.trim() || "", dur: schedForm.duration.trim() || "—", ic: schedForm.emoji } : item));
+                            } else {
+                              const color = SCHED_COLORS[scheduleItems.length % SCHED_COLORS.length];
+                              setScheduleItems(prev => [...prev, { t: schedForm.time.trim(), n: schedForm.title.trim().toUpperCase(), d: schedForm.desc.trim() || "", dur: schedForm.duration.trim() || "—", ic: schedForm.emoji, c: color, done: false }]);
+                            }
                             setShowScheduleModal(false);
                           }
                         }}
@@ -487,7 +508,7 @@ const Overview = () => {
                           padding: "8px 18px", cursor: "pointer", letterSpacing: 1,
                           boxShadow: "0 0 12px rgba(57,208,255,0.3)",
                         }}
-                      >ADD</button>
+                      >{editingScheduleIdx !== null ? "SAVE" : "ADD"}</button>
                     </div>
                   </div>
                 </div>
