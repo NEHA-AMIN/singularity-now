@@ -298,7 +298,7 @@ const Overview = () => {
                     transition: "box-shadow 0.3s ease, background 0.3s ease",
                     boxShadow: "0 0 8px rgba(57,208,255,0.15)",
                   }}
-                  onClick={() => { setShowScheduleModal(true); setSchedForm({ time: "", title: "", duration: "", desc: "", emoji: "⭐" }); setShowEmojiPicker(false); }}
+                  onClick={() => { setEditingScheduleIdx(null); setShowScheduleModal(true); setSchedForm({ time: "", title: "", duration: "", desc: "", emoji: "⭐" }); setShowEmojiPicker(false); }}
                   onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 0 8px rgba(57,208,255,0.15)"; e.currentTarget.style.background = "rgba(57,208,255,0.12)"; }}
                 >+</button>
               </div>
