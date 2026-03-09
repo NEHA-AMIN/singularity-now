@@ -112,14 +112,15 @@ const Overview = () => {
 
   // Schedule state
   const [scheduleItems, setScheduleItems] = useState([
-    { t: "05:00 AM", n: "MATH SPRINT", d: "Linear algebra deep focus", dur: "45m", ic: "📐", c: "#39D0FF" },
-    { t: "06:00 AM", n: "GRL WRITING", d: "Discussion section draft", dur: "45m", ic: "📝", c: "#8B5CFF" },
-    { t: "09:00 AM", n: "IBM ISL WORK", d: "Daily high-visibility output", dur: "2h", ic: "💼", c: "#39D0FF" },
-    { t: "11:30 AM", n: "NEURIPS EXP.", d: "Positional encoding tests", dur: "45m", ic: "🔬", c: "#8B5CFF" },
-    { t: "06:00 PM", n: "GYM SESSION", d: "Evening training — calisthenics", dur: "1h", ic: "🏋", c: "#FF8A3D" },
+    { t: "05:00 AM", n: "MATH SPRINT", d: "Linear algebra deep focus", dur: "45m", ic: "📐", c: "#39D0FF", done: false },
+    { t: "06:00 AM", n: "GRL WRITING", d: "Discussion section draft", dur: "45m", ic: "📝", c: "#8B5CFF", done: false },
+    { t: "09:00 AM", n: "IBM ISL WORK", d: "Daily high-visibility output", dur: "2h", ic: "💼", c: "#39D0FF", done: false },
+    { t: "11:30 AM", n: "NEURIPS EXP.", d: "Positional encoding tests", dur: "45m", ic: "🔬", c: "#8B5CFF", done: false },
+    { t: "06:00 PM", n: "GYM SESSION", d: "Evening training — calisthenics", dur: "1h", ic: "🏋", c: "#FF8A3D", done: false },
   ]);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [schedForm, setSchedForm] = useState({ time: "", title: "", duration: "", desc: "", emoji: "⭐" });
+  const [editingScheduleIdx, setEditingScheduleIdx] = useState<number | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const EMOJI_OPTIONS = ["📐","📝","💼","🔬","🏋","📖","🧘","🏃","💻","🎯","🎨","🎵","🍎","☕","🌙","⚡","🔥","💡","🚀","🎤"];
