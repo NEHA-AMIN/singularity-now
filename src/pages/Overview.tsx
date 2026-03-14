@@ -16,6 +16,15 @@ const SPRINT_LOG: Record<string, number> = {
 const dk = (y: number, m: number, d: number) =>
   `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 
+const formatFinanceDate = (iso: string) => {
+  const [y, m, d] = iso.split("-");
+  const dt = new Date(Number(y), Number(m) - 1, Number(d));
+  const day = dt.toLocaleString("default", { weekday: "short" });
+  const month = dt.toLocaleString("default", { month: "short" });
+  const yy = y.slice(-2);
+  return `${String(d).padStart(2, "0")} ${month} ${yy} (${day})`;
+};
+
 const INITIAL_NOTES = [
   "Look into LoRA fine-tuning...",
   "TensorTonic ep. on eigenvalues",
@@ -119,7 +128,7 @@ const Overview = () => {
     { t: "06:00 PM", n: "GYM SESSION", d: "Evening training — calisthenics", dur: "1h", ic: "🏋", c: "#FF8A3D", done: false },
   ]);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
-  const [schedForm, setSchedForm] = useState({ time: "", title: "", duration: "", desc: "", emoji: "⭐" });
+  const [schedForm, setSchedForm] = useState({ time: "", ampm: "AM", title: "", duration: "", desc: "", emoji: "⭐" });
   const [editingScheduleIdx, setEditingScheduleIdx] = useState<number | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
@@ -137,20 +146,11 @@ const Overview = () => {
   const todayQuote = QUOTES[today % QUOTES.length];
 
   // Finance state
-  type FinanceEntry = { amount: number; category: "food" | "travel" | "me"; details: string; date: string; time: string };
+  type FinanceEntry = { amount: number; category: "food" | "travel" | "me" | "other"; details: string; date: string; time: string };
   const [financeView, setFinanceView] = useState<"daily" | "weekly" | "monthly">("daily");
-  const [financeEntries, setFinanceEntries] = useState<FinanceEntry[]>([
-    { amount: 150, category: "food", date: "2026-03-14", time: "08:30", details: "Breakfast" },
-    { amount: 200, category: "travel", date: "2026-03-14", time: "09:15", details: "Auto to office" },
-    { amount: 500, category: "me", date: "2026-03-13", time: "18:00", details: "Skincare" },
-    { amount: 300, category: "food", date: "2026-03-12", time: "13:00", details: "Lunch" },
-    { amount: 120, category: "food", date: "2026-03-11", time: "20:00", details: "Dinner snacks" },
-    { amount: 800, category: "travel", date: "2026-03-10", time: "07:00", details: "Cab" },
-    { amount: 250, category: "me", date: "2026-03-09", time: "16:00", details: "Book" },
-    { amount: 400, category: "food", date: "2026-03-08", time: "12:30", details: "Groceries" },
-  ]);
+  const [financeEntries, setFinanceEntries] = useState<FinanceEntry[]>([]);
   const [showFinanceModal, setShowFinanceModal] = useState(false);
-  const [financeForm, setFinanceForm] = useState({ amount: "", category: "food" as "food" | "travel" | "me", details: "" });
+  const [financeForm, setFinanceForm] = useState({ amount: "", category: "food" as "food" | "travel" | "me" | "other", details: "" });
    const [showMonthlyDetails, setShowMonthlyDetails] = useState(false);
    const [showAllTransactions, setShowAllTransactions] = useState(false);
 
@@ -158,6 +158,7 @@ const Overview = () => {
     { key: "food" as const, label: "🍔 Food", c: "#FF8A3D" },
     { key: "travel" as const, label: "🚗 Travel", c: "#39D0FF" },
     { key: "me" as const, label: "💅 Me", c: "#FF4FD8" },
+    { key: "other" as const, label: "🧾 Other", c: "#A3A3FF" },
   ];
   const catColor = (cat: string) => FINANCE_CATS.find(c => c.key === cat)?.c ?? "#8B5CFF";
 
@@ -180,7 +181,7 @@ const Overview = () => {
   const monthlyTotal = financeEntries.filter(e => e.date.startsWith(`${year}-${String(month + 1).padStart(2, "0")}`)).reduce((s, e) => s + e.amount, 0);
 
   const getDailyBarData = () => {
-    const cats = ["food", "travel", "me"] as const;
+    const cats = ["food", "travel", "me", "other"] as const;
     const todayEntries = financeEntries.filter(e => e.date === todayStr);
     return cats.map(c => ({ cat: c, total: todayEntries.filter(e => e.category === c).reduce((s, e) => s + e.amount, 0) }));
   };
@@ -191,7 +192,7 @@ const Overview = () => {
   };
 
   const getMonthlyBarData = () => {
-    const cats = ["food", "travel", "me"] as const;
+    const cats = ["food", "travel", "me", "other"] as const;
     const monthEntries = financeEntries.filter(e => e.date.startsWith(`${year}-${String(month + 1).padStart(2, "0")}`));
     return cats.map(c => ({ cat: c, total: monthEntries.filter(e => e.category === c).reduce((s, e) => s + e.amount, 0) }));
   };
@@ -375,7 +376,7 @@ const Overview = () => {
                     transition: "box-shadow 0.3s ease, background 0.3s ease",
                     boxShadow: "0 0 8px rgba(57,208,255,0.15)",
                   }}
-                  onClick={() => { setEditingScheduleIdx(null); setShowScheduleModal(true); setSchedForm({ time: "", title: "", duration: "", desc: "", emoji: "⭐" }); setShowEmojiPicker(false); }}
+                  onClick={() => { setEditingScheduleIdx(null); setShowScheduleModal(true); setSchedForm({ time: "", ampm: "AM", title: "", duration: "", desc: "", emoji: "⭐" }); setShowEmojiPicker(false); }}
                   onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 0 8px rgba(57,208,255,0.15)"; e.currentTarget.style.background = "rgba(57,208,255,0.12)"; }}
                 >+</button>
               </div>
@@ -384,7 +385,8 @@ const Overview = () => {
                   key={i}
                   onClick={() => {
                     setEditingScheduleIdx(i);
-                    setSchedForm({ time: s.t, title: s.n, duration: s.dur, desc: s.d, emoji: s.ic });
+                    const [time, ampm] = s.t.split(" ");
+                    setSchedForm({ time, ampm: ampm || "AM", title: s.n, duration: s.dur, desc: s.d, emoji: s.ic });
                     setShowScheduleModal(true);
                     setShowEmojiPicker(false);
                   }}
@@ -413,7 +415,8 @@ const Overview = () => {
                   onClick={() => setShowScheduleModal(false)}
                   style={{
                     position: "fixed", inset: 0, zIndex: 9999,
-                    background: "rgba(0,0,0,0.7)", backdropFilter: "blur(6px)",
+                    background: "radial-gradient(circle at center, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.98) 75%)",
+                    backdropFilter: "blur(14px)",
                     display: "flex", alignItems: "center", justifyContent: "center",
                   }}
                 >
@@ -424,8 +427,19 @@ const Overview = () => {
                       border: "1px solid rgba(57,208,255,0.3)", borderRadius: 16,
                       padding: 24, boxShadow: "0 0 40px rgba(57,208,255,0.15)",
                       animation: "slideAppend 0.35s cubic-bezier(0.22,1,0.36,1) forwards",
+                      position: "relative",
                     }}
                   >
+                    <button
+                      onClick={() => setShowScheduleModal(false)}
+                      style={{
+                        position: "absolute", top: 14, right: 14, width: 30, height: 30,
+                        borderRadius: 12, border: "1px solid rgba(255,255,255,0.12)",
+                        background: "rgba(255,255,255,0.06)", color: "#9AA3B2",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        cursor: "pointer", fontSize: 14,
+                      }}
+                    >✕</button>
                     <div style={{ fontFamily: "'Raleway',sans-serif", fontSize: 14, fontWeight: 600, color: "#E8ECF4", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 18 }}>{editingScheduleIdx !== null ? "Edit Schedule Item" : "Add Schedule Item"}</div>
 
                     {/* Emoji picker */}
@@ -471,19 +485,36 @@ const Overview = () => {
                     {/* Time input */}
                     <div style={{ marginBottom: 12 }}>
                       <div style={{ fontFamily: "'Raleway',sans-serif", fontSize: 9, fontWeight: 600, color: "#9AA3B2", letterSpacing: 1, marginBottom: 6 }}>TIME</div>
-                      <input
-                        value={schedForm.time}
-                        onChange={e => setSchedForm(f => ({ ...f, time: e.target.value }))}
-                        placeholder="e.g. 08:00 AM"
-                        style={{
-                          width: "100%", height: 40, background: "rgba(255,255,255,0.04)",
-                          border: "1px solid rgba(57,208,255,0.2)", borderRadius: 10,
-                          padding: "0 14px", color: "#E8ECF4", fontFamily: "'Raleway',sans-serif", fontSize: 13,
-                          outline: "none",
-                        }}
-                        onFocus={e => e.currentTarget.style.borderColor = "#39D0FF"}
-                        onBlur={e => e.currentTarget.style.borderColor = "rgba(57,208,255,0.2)"}
-                      />
+                      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                        <input
+                          value={schedForm.time}
+                          onChange={e => setSchedForm(f => ({ ...f, time: e.target.value }))}
+                          placeholder="e.g. 05:00"
+                          style={{
+                            flex: 1, height: 40, background: "rgba(255,255,255,0.04)",
+                            border: "1px solid rgba(57,208,255,0.2)", borderRadius: 10,
+                            padding: "0 14px", color: "#E8ECF4", fontFamily: "'Raleway',sans-serif", fontSize: 13,
+                            outline: "none",
+                          }}
+                          onFocus={e => e.currentTarget.style.borderColor = "#39D0FF"}
+                          onBlur={e => e.currentTarget.style.borderColor = "rgba(57,208,255,0.2)"}
+                        />
+                        <div style={{ display: "flex", gap: 4 }}>
+                          {(["AM", "PM"] as const).map(x => (
+                            <button
+                              key={x}
+                              onClick={() => setSchedForm(f => ({ ...f, ampm: x }))}
+                              style={{
+                                width: 46, height: 40, borderRadius: 10,
+                                border: schedForm.ampm === x ? "1px solid rgba(57,208,255,0.9)" : "1px solid rgba(57,208,255,0.2)",
+                                background: schedForm.ampm === x ? "rgba(57,208,255,0.25)" : "rgba(0,0,0,0.2)",
+                                color: schedForm.ampm === x ? "#E8ECF4" : "#9AA3B2",
+                                cursor: "pointer", fontFamily: "'Raleway',sans-serif", fontSize: 12,
+                              }}
+                            >{x}</button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
 
                     {/* Title + Duration row */}
@@ -505,11 +536,12 @@ const Overview = () => {
                           onBlur={e => e.currentTarget.style.borderColor = "rgba(57,208,255,0.2)"}
                           onKeyDown={e => {
                             if (e.key === "Enter" && schedForm.title.trim() && schedForm.time.trim()) {
+                              const timeWithAmpm = `${schedForm.time.trim()} ${schedForm.ampm}`;
                               if (editingScheduleIdx !== null) {
-                                setScheduleItems(prev => prev.map((item, idx) => idx === editingScheduleIdx ? { ...item, t: schedForm.time.trim(), n: schedForm.title.trim().toUpperCase(), d: schedForm.desc.trim() || "", dur: schedForm.duration.trim() || "—", ic: schedForm.emoji } : item));
+                                setScheduleItems(prev => prev.map((item, idx) => idx === editingScheduleIdx ? { ...item, t: timeWithAmpm, n: schedForm.title.trim().toUpperCase(), d: schedForm.desc.trim() || "", dur: schedForm.duration.trim() || "—", ic: schedForm.emoji } : item));
                               } else {
                                 const color = SCHED_COLORS[scheduleItems.length % SCHED_COLORS.length];
-                                setScheduleItems(prev => [...prev, { t: schedForm.time.trim(), n: schedForm.title.trim().toUpperCase(), d: schedForm.desc.trim() || "", dur: schedForm.duration.trim() || "—", ic: schedForm.emoji, c: color, done: false }]);
+                                setScheduleItems(prev => [...prev, { t: timeWithAmpm, n: schedForm.title.trim().toUpperCase(), d: schedForm.desc.trim() || "", dur: schedForm.duration.trim() || "—", ic: schedForm.emoji, c: color, done: false }]);
                               }
                               setShowScheduleModal(false);
                             }
@@ -536,15 +568,6 @@ const Overview = () => {
 
                     {/* Buttons */}
                     <div style={{ display: "flex", gap: 10, marginTop: 18, justifyContent: "flex-end" }}>
-                      <button
-                        onClick={() => setShowScheduleModal(false)}
-                        style={{
-                          fontFamily: "'Raleway',sans-serif", fontSize: 11, fontWeight: 600,
-                          color: "#9AA3B2", background: "rgba(255,255,255,0.05)",
-                          border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8,
-                          padding: "8px 18px", cursor: "pointer", letterSpacing: 1,
-                        }}
-                      >CANCEL</button>
                       {editingScheduleIdx !== null && (
                         <button
                           onClick={() => {
@@ -569,11 +592,12 @@ const Overview = () => {
                       <button
                         onClick={() => {
                           if (schedForm.title.trim() && schedForm.time.trim()) {
+                            const timeWithAmpm = `${schedForm.time.trim()} ${schedForm.ampm}`;
                             if (editingScheduleIdx !== null) {
-                              setScheduleItems(prev => prev.map((item, idx) => idx === editingScheduleIdx ? { ...item, t: schedForm.time.trim(), n: schedForm.title.trim().toUpperCase(), d: schedForm.desc.trim() || "", dur: schedForm.duration.trim() || "—", ic: schedForm.emoji } : item));
+                              setScheduleItems(prev => prev.map((item, idx) => idx === editingScheduleIdx ? { ...item, t: timeWithAmpm, n: schedForm.title.trim().toUpperCase(), d: schedForm.desc.trim() || "", dur: schedForm.duration.trim() || "—", ic: schedForm.emoji } : item));
                             } else {
                               const color = SCHED_COLORS[scheduleItems.length % SCHED_COLORS.length];
-                              setScheduleItems(prev => [...prev, { t: schedForm.time.trim(), n: schedForm.title.trim().toUpperCase(), d: schedForm.desc.trim() || "", dur: schedForm.duration.trim() || "—", ic: schedForm.emoji, c: color, done: false }]);
+                              setScheduleItems(prev => [...prev, { t: timeWithAmpm, n: schedForm.title.trim().toUpperCase(), d: schedForm.desc.trim() || "", dur: schedForm.duration.trim() || "—", ic: schedForm.emoji, c: color, done: false }]);
                             }
                             setShowScheduleModal(false);
                           }
@@ -1269,10 +1293,10 @@ const Overview = () => {
 
               {/* Recent transactions */}
               <div style={{ borderTop: "1px solid rgba(139,92,255,0.15)", paddingTop: 8 }}>
-                {financeEntries.filter(e => financeView === "daily" ? e.date === todayStr : financeView === "weekly" ? weekDates.includes(e.date) : e.date.startsWith(`${year}-${String(month+1).padStart(2,"0")}`)).slice(0, 3).map((e, i) => (
+                {financeEntries.filter(e => financeView === "daily" ? e.date === todayStr : financeView === "weekly" ? weekDates.includes(e.date) : e.date.startsWith(`${year}-${String(month+1).padStart(2,"0")}`)).slice(0, 1).map((e, i) => (
                   <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 0", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <span style={{ fontSize: 10 }}>{e.category === "food" ? "🍔" : e.category === "travel" ? "🚗" : "💅"}</span>
+                      <span style={{ fontSize: 10 }}>{e.category === "food" ? "🍔" : e.category === "travel" ? "🚗" : e.category === "me" ? "💅" : "🧾"}</span>
                       <span style={{ fontFamily: "'Raleway',sans-serif", fontSize: 9, color: "#E8ECF4" }}>{e.details || e.category}</span>
                     </div>
                     <span className="sf-num" style={{ fontSize: 9, color: catColor(e.category) }}>₹{e.amount}</span>
@@ -1434,14 +1458,15 @@ const Overview = () => {
                               border: `1px solid ${catColor(e.category)}30`,
                               display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14,
                             }}>
-                              {e.category === "food" ? "🍔" : e.category === "travel" ? "🚗" : "💅"}
+                              {e.category === "food" ? "🍔" : e.category === "travel" ? "🚗" : e.category === "me" ? "💅" : "🧾"}
                             </div>
                             <div>
                               <div style={{ fontFamily: "'Raleway',sans-serif", fontSize: 12, fontWeight: 500, color: "#E8ECF4" }}>
                                 {e.details || e.category.charAt(0).toUpperCase() + e.category.slice(1)}
+                                <span style={{ opacity: 0.65, marginLeft: 6 }}>({e.time})</span>
                               </div>
-                              <div style={{ fontFamily: "'Raleway',sans-serif", fontSize: 9, color: "#9AA3B2", marginTop: 2 }}>
-                                {e.date} · {e.time}
+                              <div className="sf-num" style={{ fontSize: 9, color: "#9AA3B2", marginTop: 2 }}>
+                                {formatFinanceDate(e.date)}
                               </div>
                             </div>
                           </div>
