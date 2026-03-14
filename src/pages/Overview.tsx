@@ -125,6 +125,81 @@ const Overview = () => {
 
   const EMOJI_OPTIONS = ["📐","📝","💼","🔬","🏋","📖","🧘","🏃","💻","🎯","🎨","🎵","🍎","☕","🌙","⚡","🔥","💡","🚀","🎤"];
   const SCHED_COLORS = ["#39D0FF","#8B5CFF","#FF8A3D","#FF4FD8","#4ade80"];
+
+  // Finance state
+  type FinanceEntry = { amount: number; category: "food" | "travel" | "me"; details: string; date: string; time: string };
+  const [financeView, setFinanceView] = useState<"daily" | "weekly" | "monthly">("daily");
+  const [financeEntries, setFinanceEntries] = useState<FinanceEntry[]>([
+    { amount: 150, category: "food", date: "2026-03-14", time: "08:30", details: "Breakfast" },
+    { amount: 200, category: "travel", date: "2026-03-14", time: "09:15", details: "Auto to office" },
+    { amount: 500, category: "me", date: "2026-03-13", time: "18:00", details: "Skincare" },
+    { amount: 300, category: "food", date: "2026-03-12", time: "13:00", details: "Lunch" },
+    { amount: 120, category: "food", date: "2026-03-11", time: "20:00", details: "Dinner snacks" },
+    { amount: 800, category: "travel", date: "2026-03-10", time: "07:00", details: "Cab" },
+    { amount: 250, category: "me", date: "2026-03-09", time: "16:00", details: "Book" },
+    { amount: 400, category: "food", date: "2026-03-08", time: "12:30", details: "Groceries" },
+  ]);
+  const [showFinanceModal, setShowFinanceModal] = useState(false);
+  const [financeForm, setFinanceForm] = useState({ amount: "", category: "food" as "food" | "travel" | "me", details: "" });
+  const [showMonthlyDetails, setShowMonthlyDetails] = useState(false);
+
+  const FINANCE_CATS = [
+    { key: "food" as const, label: "🍔 Food", c: "#FF8A3D" },
+    { key: "travel" as const, label: "🚗 Travel", c: "#39D0FF" },
+    { key: "me" as const, label: "💅 Me", c: "#FF4FD8" },
+  ];
+  const catColor = (cat: string) => FINANCE_CATS.find(c => c.key === cat)?.c ?? "#8B5CFF";
+
+  const todayStr = dk(year, month, today);
+  const getWeekDates = () => {
+    const d = new Date(year, month, today);
+    const dayOfWeek = d.getDay();
+    const start = new Date(d); start.setDate(d.getDate() - dayOfWeek);
+    const dates: string[] = [];
+    for (let i = 0; i < 7; i++) {
+      const dd = new Date(start); dd.setDate(start.getDate() + i);
+      dates.push(dk(dd.getFullYear(), dd.getMonth(), dd.getDate()));
+    }
+    return dates;
+  };
+
+  const dailyTotal = financeEntries.filter(e => e.date === todayStr).reduce((s, e) => s + e.amount, 0);
+  const weekDates = getWeekDates();
+  const weeklyTotal = financeEntries.filter(e => weekDates.includes(e.date)).reduce((s, e) => s + e.amount, 0);
+  const monthlyTotal = financeEntries.filter(e => e.date.startsWith(`${year}-${String(month + 1).padStart(2, "0")}`)).reduce((s, e) => s + e.amount, 0);
+
+  const getDailyBarData = () => {
+    const cats = ["food", "travel", "me"] as const;
+    const todayEntries = financeEntries.filter(e => e.date === todayStr);
+    return cats.map(c => ({ cat: c, total: todayEntries.filter(e => e.category === c).reduce((s, e) => s + e.amount, 0) }));
+  };
+
+  const getWeeklyBarData = () => {
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    return weekDates.map((d, i) => ({ label: days[i], total: financeEntries.filter(e => e.date === d).reduce((s, e) => s + e.amount, 0) }));
+  };
+
+  const getMonthlyBarData = () => {
+    const cats = ["food", "travel", "me"] as const;
+    const monthEntries = financeEntries.filter(e => e.date.startsWith(`${year}-${String(month + 1).padStart(2, "0")}`));
+    return cats.map(c => ({ cat: c, total: monthEntries.filter(e => e.category === c).reduce((s, e) => s + e.amount, 0) }));
+  };
+
+  const handleAddExpense = () => {
+    const amt = parseFloat(financeForm.amount);
+    if (!amt || amt <= 0) return;
+    const now2 = new Date();
+    const entry: FinanceEntry = {
+      amount: amt,
+      category: financeForm.category,
+      details: financeForm.details,
+      date: dk(now2.getFullYear(), now2.getMonth(), now2.getDate()),
+      time: `${String(now2.getHours()).padStart(2, "0")}:${String(now2.getMinutes()).padStart(2, "0")}`,
+    };
+    setFinanceEntries(prev => [entry, ...prev]);
+    setFinanceForm({ amount: "", category: "food", details: "" });
+    setShowFinanceModal(false);
+  };
   const now = new Date();
   const year = now.getFullYear(), month = now.getMonth(), today = now.getDate();
   const monthName = now.toLocaleString("default", { month: "long" });
