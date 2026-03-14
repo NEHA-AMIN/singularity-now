@@ -1376,6 +1376,86 @@ const Overview = () => {
               </div>
             )}
 
+            {/* ALL TRANSACTIONS MODAL */}
+            {showAllTransactions && (
+              <div
+                onClick={() => setShowAllTransactions(false)}
+                style={{
+                  position: "fixed", inset: 0, zIndex: 9999,
+                  background: "rgba(0,0,0,0.7)", backdropFilter: "blur(6px)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}
+              >
+                <div
+                  onClick={e => e.stopPropagation()}
+                  style={{
+                    width: 400, maxHeight: "80vh", background: "#0a0a14",
+                    border: "1px solid rgba(139,92,255,0.3)", borderRadius: 16,
+                    padding: 24, boxShadow: "0 0 40px rgba(139,92,255,0.15)",
+                    animation: "slideAppend 0.35s cubic-bezier(0.22,1,0.36,1) forwards",
+                    display: "flex", flexDirection: "column",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                    <div style={{ fontFamily: "'Raleway',sans-serif", fontSize: 14, fontWeight: 600, color: "#E8ECF4", letterSpacing: 1.5, textTransform: "uppercase" }}>All Transactions</div>
+                    <button
+                      onClick={() => setShowAllTransactions(false)}
+                      style={{
+                        width: 28, height: 28, borderRadius: "50%",
+                        background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
+                        color: "#9AA3B2", cursor: "pointer", fontSize: 14,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}
+                    >✕</button>
+                  </div>
+                  <div className="sf-num" style={{ textAlign: "center", marginBottom: 16 }}>
+                    <div style={{ fontFamily: "'Raleway',sans-serif", fontSize: 9, fontWeight: 500, color: "#9AA3B2", letterSpacing: 1.5 }}>TOTAL RECORDED</div>
+                    <div style={{ fontSize: 24, fontWeight: 600, color: "#E8ECF4", marginTop: 4 }}>
+                      ₹{financeEntries.reduce((s, e) => s + e.amount, 0).toLocaleString("en-IN")}
+                    </div>
+                  </div>
+                  <div style={{ overflowY: "auto", flex: 1, paddingRight: 4 }}>
+                    {financeEntries.length === 0 ? (
+                      <div style={{ textAlign: "center", padding: 20, fontFamily: "'Raleway',sans-serif", fontSize: 12, color: "#9AA3B2" }}>No transactions yet</div>
+                    ) : (
+                      financeEntries.map((e, i) => (
+                        <div key={i} style={{
+                          display: "flex", justifyContent: "space-between", alignItems: "center",
+                          padding: "10px 8px", borderBottom: "1px solid rgba(139,92,255,0.08)",
+                          transition: "background 0.15s ease",
+                        }}
+                          onMouseEnter={ev => ev.currentTarget.style.background = "rgba(139,92,255,0.06)"}
+                          onMouseLeave={ev => ev.currentTarget.style.background = "transparent"}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                            <div style={{
+                              width: 32, height: 32, borderRadius: 8,
+                              background: `${catColor(e.category)}15`,
+                              border: `1px solid ${catColor(e.category)}30`,
+                              display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14,
+                            }}>
+                              {e.category === "food" ? "🍔" : e.category === "travel" ? "🚗" : "💅"}
+                            </div>
+                            <div>
+                              <div style={{ fontFamily: "'Raleway',sans-serif", fontSize: 12, fontWeight: 500, color: "#E8ECF4" }}>
+                                {e.details || e.category.charAt(0).toUpperCase() + e.category.slice(1)}
+                              </div>
+                              <div style={{ fontFamily: "'Raleway',sans-serif", fontSize: 9, color: "#9AA3B2", marginTop: 2 }}>
+                                {e.date} · {e.time}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="sf-num" style={{ fontSize: 14, fontWeight: 600, color: catColor(e.category) }}>
+                            ₹{e.amount.toLocaleString("en-IN")}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* HEALTH METRICS */}
             <div className="los-card bcp" style={{ padding: "16px 14px" }}>
               <div className="los-h">Health Metrics</div>
