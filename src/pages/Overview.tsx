@@ -109,6 +109,41 @@ const Overview = () => {
   const [hoveredPriority, setHoveredPriority] = useState<number | null>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const navigate = useNavigate();
+  
+  // Background customization
+  const [customBg, setCustomBg] = useState<string | null>(null);
+  const [bgBlur, setBgBlur] = useState<number>(0);
+  const bgFileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Progress Tracker state (merged HABITS + MONTHLY XP)
+  const [selectedCategory, setSelectedCategory] = useState<"academia" | "fitness" | "emotion">("academia");
+  
+  const categoryData = {
+    academia: {
+      xp: 4533,
+      change: "+15%",
+      streak: 12,
+      icon: "📚",
+      color: "#8B5CFF",
+      graphPath: "M0,50 Q20,45 40,40 T80,30 T120,35 T160,15 T200,10",
+    },
+    fitness: {
+      xp: 3210,
+      change: "+8%",
+      streak: 7,
+      icon: "💪",
+      color: "#FF8A3D",
+      graphPath: "M0,45 Q20,40 40,35 T80,25 T120,30 T160,20 T200,15",
+    },
+    emotion: {
+      xp: 2890,
+      change: "+12%",
+      streak: 5,
+      icon: "🧘",
+      color: "#39D0FF",
+      graphPath: "M0,55 Q20,50 40,45 T80,35 T120,40 T160,25 T200,20",
+    },
+  };
 
   // Active Projects state
   const [projects, setProjects] = useState<Record<string, string[]>>(INITIAL_PROJECTS);
@@ -118,6 +153,106 @@ const Overview = () => {
   const [projectMenu, setProjectMenu] = useState<{ catKey: string; idx: number } | null>(null);
   const [projectAttachments, setProjectAttachments] = useState<Record<string, string[]>>({});
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  
+  // Background upload handler
+  const handleBgUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setCustomBg(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const triggerBgFileInput = () => {
+    bgFileInputRef.current?.click();
+  };
+
+  const toggleBgBlur = () => {
+    setBgBlur(prev => {
+      if (prev === 0) return 4;
+      if (prev === 4) return 8;
+      return 0;
+    });
+  };
+
+  // Emotion Tracker state
+  const [activeEmotion, setActiveEmotion] = useState<string | null>(null);
+  const [emotionStartTime, setEmotionStartTime] = useState<number | null>(null);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [emotionLogs, setEmotionLogs] = useState<Array<{ emotion: string; duration: number; startTime: string; endTime: string }>>([]);
+  const [showEmotionLogs, setShowEmotionLogs] = useState(false);
+  const [emotionViewMode, setEmotionViewMode] = useState<"list" | "graph">("list");
+
+  const emotions = [
+    { key: "gloomy", label: "Gloomy", emoji: "😔", color: "#6B7280" },
+    { key: "anxious", label: "Anxious", emoji: "😰", color: "#FF8A3D" },
+    { key: "happy", label: "Happy", emoji: "😊", color: "#4ade80" },
+    { key: "energetic", label: "Energetic", emoji: "⚡", color: "#39D0FF" },
+    { key: "calm", label: "Calm", emoji: "😌", color: "#8B5CFF" },
+    { key: "stressed", label: "Stressed", emoji: "😣", color: "#FF4FD8" },
+  ];
+
+  // Stopwatch effect
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval> | null = null;
+    if (activeEmotion && emotionStartTime) {
+      interval = setInterval(() => {
+        setElapsedTime(Date.now() - emotionStartTime);
+      }, 100);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [activeEmotion, emotionStartTime]);
+
+  const handleEmotionClick = (emotionKey: string) => {
+    if (activeEmotion === emotionKey) {
+      // Stop tracking
+      const duration = Date.now() - (emotionStartTime || Date.now());
+      const log = {
+        emotion: emotionKey,
+        duration,
+        startTime: new Date(emotionStartTime || Date.now()).toISOString(),
+        endTime: new Date().toISOString(),
+      };
+      setEmotionLogs(prev => [...prev, log]);
+      
+      // Here you would send to backend/Excel
+      console.log("Emotion Log:", log);
+      
+      setActiveEmotion(null);
+      setEmotionStartTime(null);
+      setElapsedTime(0);
+    } else {
+      // Start tracking new emotion (stop previous if any)
+      if (activeEmotion && emotionStartTime) {
+        const duration = Date.now() - emotionStartTime;
+        const log = {
+          emotion: activeEmotion,
+          duration,
+          startTime: new Date(emotionStartTime).toISOString(),
+          endTime: new Date().toISOString(),
+        };
+        setEmotionLogs(prev => [...prev, log]);
+        console.log("Emotion Log:", log);
+      }
+      
+      setActiveEmotion(emotionKey);
+      setEmotionStartTime(Date.now());
+      setElapsedTime(0);
+    }
+  };
+
+  const formatTime = (ms: number) => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  };
 
   // Schedule state
   const [scheduleItems, setScheduleItems] = useState([
@@ -220,7 +355,109 @@ const Overview = () => {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#000000", display: "flex", justifyContent: "center" }}>
+    <div style={{ minHeight: "100vh", background: "#000000", display: "flex", justifyContent: "center", position: "relative", overflow: "hidden" }}>
+      {/* Background Image */}
+      {customBg && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 0,
+            backgroundImage: `url(${customBg})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            filter: `blur(${bgBlur}px)`,
+            transition: "filter 0.3s ease"
+          }}
+        />
+      )}
+      
+      {/* Background Controls */}
+      <input
+        ref={bgFileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleBgUpload}
+        style={{ display: "none" }}
+      />
+      <div style={{
+        position: "fixed",
+        top: 20,
+        right: 20,
+        zIndex: 1000,
+        display: "flex",
+        gap: 12
+      }}>
+        <button
+          onClick={triggerBgFileInput}
+          title="Upload custom background"
+          style={{
+            width: 44,
+            height: 44,
+            background: "rgba(0,0,0,0.85)",
+            border: "1.5px solid rgba(57,208,255,0.6)",
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            transition: "all 0.3s ease",
+            backdropFilter: "blur(4px)"
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(57,208,255,0.2)";
+            e.currentTarget.style.borderColor = "#39D0FF";
+            e.currentTarget.style.transform = "scale(1.1) rotate(90deg)";
+            e.currentTarget.style.boxShadow = "0 0 15px rgba(57,208,255,0.5)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(0,0,0,0.85)";
+            e.currentTarget.style.borderColor = "rgba(57,208,255,0.6)";
+            e.currentTarget.style.transform = "scale(1)";
+            e.currentTarget.style.boxShadow = "none";
+          }}
+        >
+          <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 22, height: 22, stroke: "#39D0FF" }}>
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
+        <button
+          onClick={toggleBgBlur}
+          title={`Background blur: ${bgBlur === 0 ? 'Off' : bgBlur === 4 ? 'Low' : 'High'}`}
+          style={{
+            width: 44,
+            height: 44,
+            background: bgBlur > 0 ? "rgba(57,208,255,0.3)" : "rgba(0,0,0,0.85)",
+            border: bgBlur > 0 ? "1.5px solid #39D0FF" : "1.5px solid rgba(57,208,255,0.6)",
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            transition: "all 0.3s ease",
+            backdropFilter: "blur(4px)",
+            boxShadow: bgBlur > 0 ? "0 0 10px rgba(57,208,255,0.4)" : "none"
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(57,208,255,0.2)";
+            e.currentTarget.style.borderColor = "#39D0FF";
+            e.currentTarget.style.transform = "scale(1.1)";
+            e.currentTarget.style.boxShadow = "0 0 15px rgba(57,208,255,0.5)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = bgBlur > 0 ? "rgba(57,208,255,0.3)" : "rgba(0,0,0,0.85)";
+            e.currentTarget.style.borderColor = bgBlur > 0 ? "#39D0FF" : "rgba(57,208,255,0.6)";
+            e.currentTarget.style.transform = "scale(1)";
+            e.currentTarget.style.boxShadow = bgBlur > 0 ? "0 0 10px rgba(57,208,255,0.4)" : "none";
+          }}
+        >
+          <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 22, height: 22, stroke: "#39D0FF" }}>
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M12 5v.01M12 18.99v.01M5 12h.01M18.99 12h.01M7.05 7.05l.01.01M16.94 16.94l.01.01M7.05 16.95l.01-.01M16.94 7.06l.01-.01"></path>
+          </svg>
+        </button>
+      </div>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Caveat:wght@400;500;600;700&family=Raleway:wght@200;300;400;500;600;700&display=swap');
         .los-wrap {
@@ -252,6 +489,7 @@ const Overview = () => {
         @media (max-width: 680px) { .los-grid3 { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 440px) { .los-grid3 { grid-template-columns: 1fr; } }
         @keyframes flameFlicker { 0%,100% { transform: scale(1) rotate(0deg); } 25% { transform: scale(1.05) rotate(-2deg); } 75% { transform: scale(1.08) rotate(2deg); } }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.7; } }
         @keyframes slideAppend {
           0% { opacity: 0; transform: translateY(-8px) scale(0.95); }
           60% { opacity: 1; transform: translateY(2px) scale(1.01); }
@@ -260,7 +498,7 @@ const Overview = () => {
         .slide-append { animation: slideAppend 0.4s cubic-bezier(0.22,1,0.36,1) forwards; }
       `}</style>
 
-      <div style={{ width: "100%", maxWidth: 780 }}>
+      <div style={{ width: "100%", maxWidth: 780, position: "relative", zIndex: 1 }}>
         <div className="los-wrap">
 
           {/* BACK BUTTON */}
@@ -326,38 +564,238 @@ const Overview = () => {
               ))}
             </div>
 
-            {/* HABITS / STREAK */}
-            <div className="los-card bk" style={{ textAlign: "center" }}>
-              <div className="los-h">Habits</div>
-              <div style={{ fontSize: 56, animation: "flameFlicker 1.5s ease-in-out infinite", filter: "drop-shadow(0 0 15px rgba(255,79,216,0.4)) drop-shadow(0 0 30px rgba(255,138,61,0.2))", marginBottom: 8 }}>🔥</div>
-              <div style={{ fontFamily: "'Raleway',sans-serif", fontSize: 18, fontWeight: 500, color: "#E8ECF4", letterSpacing: 1 }}>{streak} DAY STREAK!</div>
-              <div style={{ display: "flex", justifyContent: "center", gap: 10, marginTop: 14 }}>
-                {["🧘", "🏃", "</>", "📖", "💧"].map((ic, i) => (
-                  <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(255,79,216,0.1)", border: "1px solid rgba(255,79,216,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "#FF4FD8" }}>{ic}</div>
-                    {[0, 1, 2, 3].map(j => (
-                      <div key={j} style={{ width: 12, height: 12, borderRadius: "50%", background: "rgba(57,208,255,0.15)", border: "1px solid rgba(57,208,255,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <span style={{ fontSize: 7, color: "#39D0FF" }}>✓</span>
-                      </div>
-                    ))}
-                  </div>
+            {/* PROGRESS TRACKER (Merged HABITS + MONTHLY XP) */}
+            <div className="los-card bcp">
+              <div className="los-h">Progress Tracker</div>
+              
+              {/* Category Buttons */}
+              <div style={{ display: "flex", gap: 8, marginBottom: 16, justifyContent: "center" }}>
+                {(["academia", "fitness", "emotion"] as const).map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    style={{
+                      fontFamily: "'Raleway',sans-serif",
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: selectedCategory === cat ? "#E8ECF4" : "#9AA3B2",
+                      background: selectedCategory === cat ? `${categoryData[cat].color}22` : "rgba(255,255,255,0.05)",
+                      border: `1.5px solid ${selectedCategory === cat ? categoryData[cat].color : "rgba(255,255,255,0.1)"}`,
+                      borderRadius: 8,
+                      padding: "8px 16px",
+                      cursor: "pointer",
+                      transition: "all 0.3s ease",
+                      textTransform: "uppercase",
+                      letterSpacing: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      boxShadow: selectedCategory === cat ? `0 0 12px ${categoryData[cat].color}44` : "none",
+                    }}
+                  >
+                    <span style={{ fontSize: 14 }}>{categoryData[cat].icon}</span>
+                    {cat}
+                  </button>
                 ))}
+              </div>
+
+              {/* XP Display */}
+              <div style={{ textAlign: "center", marginBottom: 14 }}>
+                <div style={{ fontFamily: "'Raleway',sans-serif", fontSize: 32, fontWeight: 600, color: "#E8ECF4" }}>
+                  {categoryData[selectedCategory].xp.toLocaleString()}
+                </div>
+                <div style={{ fontFamily: "'Raleway',sans-serif", fontSize: 11, fontWeight: 500, color: "#4ade80" }}>
+                  {categoryData[selectedCategory].change} from last week
+                </div>
+              </div>
+
+              {/* Graph */}
+              <svg width="100%" height="60" viewBox="0 0 200 60" preserveAspectRatio="none" style={{ marginBottom: 14 }}>
+                <defs>
+                  <linearGradient id={`lgFill-${selectedCategory}`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={`${categoryData[selectedCategory].color}55`} />
+                    <stop offset="100%" stopColor={`${categoryData[selectedCategory].color}00`} />
+                  </linearGradient>
+                  <linearGradient id={`lgStroke-${selectedCategory}`} x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor={categoryData[selectedCategory].color} />
+                    <stop offset="100%" stopColor="#FF4FD8" />
+                  </linearGradient>
+                </defs>
+                <path
+                  d={categoryData[selectedCategory].graphPath}
+                  fill="none"
+                  stroke={`url(#lgStroke-${selectedCategory})`}
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  style={{ filter: `drop-shadow(0 0 6px ${categoryData[selectedCategory].color}88)` }}
+                />
+                <path
+                  d={`${categoryData[selectedCategory].graphPath} L200,60 L0,60 Z`}
+                  fill={`url(#lgFill-${selectedCategory})`}
+                />
+              </svg>
+
+              {/* Streak Bar */}
+              <div style={{
+                background: "rgba(255,255,255,0.05)",
+                borderRadius: 8,
+                padding: "10px 14px",
+                border: `1px solid ${categoryData[selectedCategory].color}33`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{
+                    fontSize: 20,
+                    animation: "flameFlicker 1.5s ease-in-out infinite",
+                    filter: `drop-shadow(0 0 8px ${categoryData[selectedCategory].color}66)`
+                  }}>
+                    🔥
+                  </div>
+                  <div>
+                    <div style={{ fontFamily: "'Raleway',sans-serif", fontSize: 14, fontWeight: 600, color: "#E8ECF4" }}>
+                      {categoryData[selectedCategory].streak} Day Streak
+                    </div>
+                    <div style={{ fontFamily: "'Raleway',sans-serif", fontSize: 9, fontWeight: 500, color: "#9AA3B2" }}>
+                      Keep it going!
+                    </div>
+                  </div>
+                </div>
+                <div style={{
+                  width: 120,
+                  height: 6,
+                  background: "rgba(255,255,255,0.08)",
+                  borderRadius: 3,
+                  overflow: "hidden",
+                }}>
+                  <div style={{
+                    width: `${(categoryData[selectedCategory].streak / 30) * 100}%`,
+                    height: "100%",
+                    background: `linear-gradient(90deg, ${categoryData[selectedCategory].color}, #FF4FD8)`,
+                    borderRadius: 3,
+                    boxShadow: `0 0 8px ${categoryData[selectedCategory].color}66`,
+                  }} />
+                </div>
               </div>
             </div>
 
-            {/* MONTHLY XP */}
-            <div className="los-card bcp">
-              <div className="los-h">Monthly XP</div>
-              <div style={{ fontFamily: "'Raleway',sans-serif", fontSize: 28, fontWeight: 500, color: "#E8ECF4" }}>4,533</div>
-              <div style={{ fontFamily: "'Raleway',sans-serif", fontSize: 11, fontWeight: 500, color: "#4ade80", marginBottom: 14 }}>+15% from last week</div>
-              <svg width="100%" height="60" viewBox="0 0 200 60" preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id="lgFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="rgba(139,92,255,0.3)" /><stop offset="100%" stopColor="rgba(139,92,255,0)" /></linearGradient>
-                  <linearGradient id="lgStroke" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#8B5CFF" /><stop offset="100%" stopColor="#FF4FD8" /></linearGradient>
-                </defs>
-                <path d="M0,50 Q20,45 40,40 T80,30 T120,35 T160,15 T200,10" fill="none" stroke="url(#lgStroke)" strokeWidth="2.5" strokeLinecap="round" style={{ filter: "drop-shadow(0 0 6px rgba(139,92,255,0.5))" }} />
-                <path d="M0,50 Q20,45 40,40 T80,30 T120,35 T160,15 T200,10 L200,60 L0,60 Z" fill="url(#lgFill)" />
-              </svg>
+            {/* EMOTION TRACKER */}
+            <div className="los-card bp" style={{ minHeight: 280, display: "flex", flexDirection: "column" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                <div className="los-h" style={{ marginBottom: 0 }}>Emotion Tracker</div>
+                <button
+                  onClick={() => setShowEmotionLogs(true)}
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: "50%",
+                    background: "rgba(139,92,255,0.12)",
+                    border: "1px solid rgba(139,92,255,0.35)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    fontSize: 14,
+                    color: "#8B5CFF",
+                    transition: "box-shadow 0.3s ease, background 0.3s ease",
+                    boxShadow: "0 0 8px rgba(139,92,255,0.15)",
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.boxShadow = "0 0 16px rgba(139,92,255,0.4)";
+                    e.currentTarget.style.background = "rgba(139,92,255,0.2)";
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.boxShadow = "0 0 8px rgba(139,92,255,0.15)";
+                    e.currentTarget.style.background = "rgba(139,92,255,0.12)";
+                  }}
+                >
+                  👁️
+                </button>
+              </div>
+              
+              {/* Stopwatch Display - Fixed Height */}
+              <div style={{
+                textAlign: "center",
+                marginBottom: 14,
+                padding: "12px",
+                background: "rgba(139,92,255,0.1)",
+                borderRadius: 8,
+                border: "1px solid rgba(139,92,255,0.3)",
+                minHeight: 70,
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+              }}>
+                {activeEmotion ? (
+                  <>
+                    <div style={{
+                      fontFamily: "'Orbitron',monospace",
+                      fontSize: 24,
+                      fontWeight: 700,
+                      color: "#8B5CFF",
+                      textShadow: "0 0 12px rgba(139,92,255,0.5)",
+                      marginBottom: 4,
+                    }}>
+                      {formatTime(elapsedTime)}
+                    </div>
+                    <div style={{
+                      fontFamily: "'Raleway',sans-serif",
+                      fontSize: 10,
+                      fontWeight: 500,
+                      color: "#9AA3B2",
+                      letterSpacing: 1,
+                    }}>
+                      Tracking: {emotions.find(e => e.key === activeEmotion)?.label}
+                    </div>
+                  </>
+                ) : (
+                  <div style={{
+                    fontFamily: "'Raleway',sans-serif",
+                    fontSize: 11,
+                    fontWeight: 500,
+                    color: "#6B7280",
+                    letterSpacing: 0.5,
+                  }}>
+                    Select a mood to start tracking
+                  </div>
+                )}
+              </div>
+
+              {/* Emotion Buttons */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8 }}>
+                {emotions.map((emotion) => {
+                  const isActive = activeEmotion === emotion.key;
+                  return (
+                    <button
+                      key={emotion.key}
+                      onClick={() => handleEmotionClick(emotion.key)}
+                      style={{
+                        fontFamily: "'Raleway',sans-serif",
+                        fontSize: 11,
+                        fontWeight: 600,
+                        color: isActive ? "#E8ECF4" : "#9AA3B2",
+                        background: isActive ? `${emotion.color}33` : "rgba(255,255,255,0.05)",
+                        border: `1.5px solid ${isActive ? emotion.color : "rgba(255,255,255,0.1)"}`,
+                        borderRadius: 8,
+                        padding: "10px 8px",
+                        cursor: "pointer",
+                        transition: "all 0.3s ease",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        gap: 4,
+                        boxShadow: isActive ? `0 0 12px ${emotion.color}44` : "none",
+                        animation: isActive ? "pulse 2s ease-in-out infinite" : "none",
+                      }}
+                    >
+                      <span style={{ fontSize: 20 }}>{emotion.emoji}</span>
+                      <span style={{ letterSpacing: 0.5 }}>{emotion.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
             </div>
           </div>
 
@@ -1475,6 +1913,209 @@ const Overview = () => {
                           </div>
                         </div>
                       ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* EMOTION LOGS MODAL */}
+            {showEmotionLogs && (
+              <div
+                onClick={() => setShowEmotionLogs(false)}
+                style={{
+                  position: "fixed", inset: 0, zIndex: 9999,
+                  background: "rgba(0,0,0,0.7)", backdropFilter: "blur(6px)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}
+              >
+                <div
+                  onClick={e => e.stopPropagation()}
+                  style={{
+                    width: 420, maxHeight: "80vh", background: "#0a0a14",
+                    border: "1px solid rgba(139,92,255,0.3)", borderRadius: 16,
+                    padding: 24, boxShadow: "0 0 40px rgba(139,92,255,0.15)",
+                    animation: "slideAppend 0.35s cubic-bezier(0.22,1,0.36,1) forwards",
+                    display: "flex", flexDirection: "column",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                    <div style={{ fontFamily: "'Raleway',sans-serif", fontSize: 14, fontWeight: 600, color: "#E8ECF4", letterSpacing: 1.5, textTransform: "uppercase" }}>Emotion Logs</div>
+                    <button
+                      onClick={() => setShowEmotionLogs(false)}
+                      style={{
+                        width: 28, height: 28, borderRadius: "50%",
+                        background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
+                        color: "#9AA3B2", cursor: "pointer", fontSize: 14,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}
+                    >✕</button>
+                  </div>
+
+                  {/* Month and Year + Toggle */}
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ textAlign: "center", marginBottom: 12, padding: "12px", background: "rgba(139,92,255,0.08)", borderRadius: 10, border: "1px solid rgba(139,92,255,0.2)" }}>
+                      <div style={{ fontSize: 20, fontWeight: 600, color: "#8B5CFF", fontFamily: "'Raleway',sans-serif", letterSpacing: 1 }}>
+                        {new Date().toLocaleString('default', { month: 'long' })} {new Date().getFullYear()}
+                      </div>
+                    </div>
+                    
+                    {/* View Toggle */}
+                    <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
+                      <button
+                        onClick={() => setEmotionViewMode("list")}
+                        style={{
+                          fontFamily: "'Raleway',sans-serif",
+                          fontSize: 10,
+                          fontWeight: 600,
+                          color: emotionViewMode === "list" ? "#E8ECF4" : "#9AA3B2",
+                          background: emotionViewMode === "list" ? "rgba(139,92,255,0.2)" : "rgba(255,255,255,0.05)",
+                          border: `1.5px solid ${emotionViewMode === "list" ? "#8B5CFF" : "rgba(255,255,255,0.1)"}`,
+                          borderRadius: 6,
+                          padding: "6px 16px",
+                          cursor: "pointer",
+                          transition: "all 0.3s ease",
+                          letterSpacing: 1,
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        📋 List
+                      </button>
+                      <button
+                        onClick={() => setEmotionViewMode("graph")}
+                        style={{
+                          fontFamily: "'Raleway',sans-serif",
+                          fontSize: 10,
+                          fontWeight: 600,
+                          color: emotionViewMode === "graph" ? "#E8ECF4" : "#9AA3B2",
+                          background: emotionViewMode === "graph" ? "rgba(139,92,255,0.2)" : "rgba(255,255,255,0.05)",
+                          border: `1.5px solid ${emotionViewMode === "graph" ? "#8B5CFF" : "rgba(255,255,255,0.1)"}`,
+                          borderRadius: 6,
+                          padding: "6px 16px",
+                          cursor: "pointer",
+                          transition: "all 0.3s ease",
+                          letterSpacing: 1,
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        📊 Graph
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Content Area */}
+                  <div style={{ flex: 1, overflowY: "auto", paddingRight: 8 }}>
+                    {emotionLogs.length === 0 ? (
+                      <div style={{ textAlign: "center", padding: "40px 20px", color: "#9AA3B2", fontFamily: "'Raleway',sans-serif", fontSize: 12 }}>
+                        No emotion logs yet. Start tracking your moods!
+                      </div>
+                    ) : emotionViewMode === "list" ? (
+                      // LIST VIEW
+                      emotionLogs.slice().reverse().map((log, i) => {
+                        const emotion = emotions.find(e => e.key === log.emotion);
+                        const startDate = new Date(log.startTime);
+                        const endDate = new Date(log.endTime);
+                        const durationMinutes = Math.floor(log.duration / 60000);
+                        const durationSeconds = Math.floor((log.duration % 60000) / 1000);
+                        
+                        return (
+                          <div
+                            key={i}
+                            style={{
+                              marginBottom: 12,
+                              padding: "12px 14px",
+                              background: "rgba(255,255,255,0.03)",
+                              border: `1px solid ${emotion?.color}33`,
+                              borderRadius: 10,
+                            }}
+                          >
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                              <div>
+                                <div style={{ fontFamily: "'Raleway',sans-serif", fontSize: 13, fontWeight: 600, color: "#E8ECF4", marginBottom: 4 }}>
+                                  {emotion?.label}
+                                </div>
+                                <div style={{ fontFamily: "'Raleway',sans-serif", fontSize: 9, fontWeight: 400, color: "#9AA3B2" }}>
+                                  {startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                </div>
+                              </div>
+                              <div style={{ textAlign: "right" }}>
+                                <div style={{ fontFamily: "'Orbitron',monospace", fontSize: 13, fontWeight: 600, color: emotion?.color }}>
+                                  {durationMinutes}m {durationSeconds}s
+                                </div>
+                                <div style={{ fontFamily: "'Raleway',sans-serif", fontSize: 8, fontWeight: 400, color: "#9AA3B2" }}>
+                                  Duration
+                                </div>
+                              </div>
+                            </div>
+                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, fontFamily: "'Raleway',sans-serif", color: "#6B7280" }}>
+                              <span>Start: {startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+                              <span>End: {endDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      // BAR GRAPH VIEW
+                      <div style={{ padding: "20px 10px" }}>
+                        {(() => {
+                          // Calculate total duration per emotion
+                          const emotionTotals = emotions.map(emotion => {
+                            const total = emotionLogs
+                              .filter(log => log.emotion === emotion.key)
+                              .reduce((sum, log) => sum + log.duration, 0);
+                            const totalMinutes = Math.floor(total / 60000);
+                            const totalSeconds = Math.floor((total % 60000) / 1000);
+                            return { ...emotion, totalMinutes, totalSeconds, totalMs: total };
+                          });
+                          const maxMinutes = Math.max(...emotionTotals.map(e => e.totalMinutes), 1);
+                          
+                          return emotionTotals.map((emotion, i) => (
+                            <div key={emotion.key} style={{ marginBottom: 20 }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                  <span style={{ fontSize: 16 }}>{emotion.emoji}</span>
+                                  <div style={{ fontFamily: "'Raleway',sans-serif", fontSize: 12, fontWeight: 600, color: "#E8ECF4" }}>
+                                    {emotion.label}
+                                  </div>
+                                </div>
+                                <div style={{ fontFamily: "'Orbitron',monospace", fontSize: 12, fontWeight: 600, color: emotion.totalMinutes > 0 ? emotion.color : "#6B7280" }}>
+                                  {emotion.totalMinutes > 0 ? `${emotion.totalMinutes}m ${emotion.totalSeconds}s` : "0m"}
+                                </div>
+                              </div>
+                              <div style={{
+                                height: 24,
+                                background: "rgba(255,255,255,0.05)",
+                                borderRadius: 6,
+                                overflow: "hidden",
+                                position: "relative",
+                                border: "1px solid rgba(255,255,255,0.08)",
+                              }}>
+                                {emotion.totalMinutes > 0 && (
+                                  <div style={{
+                                    width: `${Math.max((emotion.totalMinutes / maxMinutes) * 100, 5)}%`,
+                                    height: "100%",
+                                    background: `linear-gradient(90deg, ${emotion.color}, ${emotion.color}cc)`,
+                                    borderRadius: 6,
+                                    boxShadow: `0 0 12px ${emotion.color}44`,
+                                    transition: "width 0.5s ease",
+                                    position: "relative",
+                                  }}>
+                                    <div style={{
+                                      position: "absolute",
+                                      top: 0,
+                                      left: 4,
+                                      right: 4,
+                                      height: "50%",
+                                      borderRadius: "6px 6px 2px 2px",
+                                      background: "linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%)"
+                                    }} />
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ));
+                        })()}
+                      </div>
                     )}
                   </div>
                 </div>

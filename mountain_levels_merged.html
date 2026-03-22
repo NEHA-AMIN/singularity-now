@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mountain Levels - Interactive</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@700;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    width: 720px;
+    min-height: 1560px;
+    position: relative;
+    overflow: hidden;
+    font-family: 'Orbitron', monospace;
+  }
+
+  #bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    z-index: 0;
+  }
+
+  #vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 90% 100% at 50% 50%, transparent 40%, rgba(0,0,0,0.4) 100%);
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  /* ── LEVEL MARKER ── */
+  .level {
+    position: absolute;
+    left: 50%;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  .level.left  { transform: translateX(-100%); flex-direction: row; }
+  .level.right { transform: translateX(0%);    flex-direction: row; }
+
+  .level-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #e8002d;
+    box-shadow: 0 0 5px rgba(232,0,45,0.7), 0 0 10px rgba(232,0,45,0.3);
+    flex-shrink: 0;
+    cursor: pointer;
+    pointer-events: all;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .level-dot:hover {
+    transform: scale(1.5);
+    box-shadow: 0 0 10px rgba(232,0,45,0.9), 0 0 20px rgba(232,0,45,0.5);
+  }
+  .level-dot.active {
+    background: #fff;
+    box-shadow: 0 0 8px rgba(232,0,45,1), 0 0 18px rgba(232,0,45,0.6);
+  }
+
+  .level-line {
+    height: 1px;
+    width: 44px;
+    flex-shrink: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, width 0.3s ease;
+  }
+  .level.left  .level-line { background: linear-gradient(270deg, rgba(232,0,45,0.9) 0%, rgba(232,0,45,0.4) 100%); }
+  .level.right .level-line { background: linear-gradient(90deg,  rgba(232,0,45,0.9) 0%, rgba(232,0,45,0.4) 100%); }
+
+  /* hide tag and line when this level is active */
+  .level.active-level .level-line {
+    opacity: 0;
+    width: 0;
+  }
+  .level.active-level .level-tag {
+    opacity: 0;
+    pointer-events: none;
+    transform: scaleX(0.6);
+  }
+
+  .level-tag {
+    padding: 4px 9px;
+    background: rgba(5,0,1,0.75);
+    border: 0.75px solid rgba(232,0,45,0.55);
+    backdrop-filter: blur(1px);
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    pointer-events: all;
+    transition: background 0.2s, border-color 0.2s, opacity 0.25s ease, transform 0.25s ease;
+    transform-origin: right center;
+  }
+  .level.right .level-tag { transform-origin: left center; }
+  .level-tag:hover { background: rgba(20,0,4,0.88); border-color: rgba(232,0,45,0.85); }
+
+  .level.left  .level-tag { align-items: flex-end;  border-right: 2px solid #e8002d; border-left:  0.75px solid rgba(232,0,45,0.4); }
+  .level.right .level-tag { align-items: flex-start; border-left:  2px solid #e8002d; border-right: 0.75px solid rgba(232,0,45,0.4); }
+
+  .level-num {
+    font-family: 'Orbitron', monospace;
+    font-size: 16px;
+    font-weight: 900;
+    color: #e8002d;
+    letter-spacing: 0.1em;
+    line-height: 1;
+    text-shadow: 0 0 4px rgba(232,0,45,0.5);
+  }
+  .level-sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 7px;
+    color: rgba(232,0,45,0.55);
+    letter-spacing: 0.16em;
+    margin-top: 2px;
+    text-transform: uppercase;
+  }
+  .level-hex {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 6px;
+    color: rgba(200,50,60,0.4);
+    letter-spacing: 0.08em;
+    margin-top: 1px;
+  }
+
+  /* ── HEADING ── */
+  .page-heading {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 15;
+    text-align: center;
+  }
+
+  .heading-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 48px;
+    font-weight: 900;
+    font-style: italic;
+    color: #e8002d;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    text-shadow:
+      0 0 10px rgba(232,0,45,0.8),
+      0 0 20px rgba(232,0,45,0.5),
+      0 0 30px rgba(232,0,45,0.3);
+    margin: 0;
+    padding: 0;
+  }
+
+  .heading-underline {
+    height: 2px;
+    width: 180px;
+    margin: 8px auto 0;
+    background: linear-gradient(90deg,
+      rgba(232,0,45,0) 0%,
+      rgba(232,0,45,0.8) 20%,
+      rgba(232,0,45,1) 50%,
+      rgba(232,0,45,0.8) 80%,
+      rgba(232,0,45,0) 100%);
+    box-shadow: 0 0 8px rgba(232,0,45,0.6);
+  }
+
+  /* ── DIALOGUE BOX ── */
+  .dialogue {
+    position: absolute;
+    z-index: 20;
+    width: 220px;
+    background: rgba(4,0,1,0.93);
+    border: 0.75px solid rgba(232,0,45,0.5);
+    overflow: hidden;
+    pointer-events: all;
+
+    /* start collapsed */
+    max-height: 0;
+    opacity: 0;
+    transform: scaleY(0.6);
+    transform-origin: top center;
+    transition:
+      max-height 0.45s cubic-bezier(0.16,1,0.3,1),
+      opacity    0.3s ease,
+      transform  0.45s cubic-bezier(0.16,1,0.3,1);
+  }
+  .dialogue.open {
+    max-height: 320px;
+    opacity: 1;
+    transform: scaleY(1);
+  }
+
+  /* left dialogue sits to the left of center spine */
+  .dialogue.side-left {
+    right: calc(50% + 58px);  /* spine + dot + line + tag gap */
+    border-right: 2px solid #e8002d;
+  }
+  /* right dialogue sits to the right */
+  .dialogue.side-right {
+    left: calc(50% + 58px);
+    border-left: 2px solid #e8002d;
+  }
+
+  .dlg-header {
+    background: rgba(232,0,45,0.12);
+    border-bottom: 0.75px solid rgba(232,0,45,0.35);
+    padding: 7px 10px 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .dlg-lvl {
+    font-family: 'Orbitron', monospace;
+    font-size: 18px;
+    font-weight: 900;
+    color: #e8002d;
+    letter-spacing: 0.12em;
+    text-shadow: 0 0 3px rgba(232,0,45,0.4);
+  }
+  .dlg-zone {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 8px;
+    color: rgba(232,0,45,0.6);
+    letter-spacing: 0.14em;
+  }
+
+  .dlg-body {
+    padding: 9px 10px 6px;
+  }
+
+  .dlg-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 7px;
+    color: rgba(232,0,45,0.45);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+  }
+
+  .dlg-task {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9.5px;
+    color: #c8ccd2;
+    line-height: 1.65;
+    letter-spacing: 0.04em;
+    min-height: 80px;
+  }
+
+  .dlg-cursor {
+    display: inline-block;
+    width: 6px;
+    height: 11px;
+    background: #e8002d;
+    margin-left: 1px;
+    vertical-align: middle;
+    animation: blink 0.75s step-end infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  .dlg-sep {
+    height: 0.75px;
+    background: linear-gradient(90deg, rgba(232,0,45,0.5) 0%, rgba(232,0,45,0.1) 100%);
+    margin: 8px 10px;
+  }
+
+  .dlg-meta {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 10px 5px;
+  }
+  .dlg-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .dlg-meta-lbl {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 6.5px;
+    color: rgba(232,0,45,0.38);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .dlg-meta-val {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 8px;
+    color: rgba(200,210,220,0.7);
+    letter-spacing: 0.06em;
+  }
+
+  .dlg-footer {
+    padding: 6px 10px 9px;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .play-btn {
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    color: #fff;
+    background: #e8002d;
+    border: none;
+    padding: 6px 18px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.2s, letter-spacing 0.2s;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  }
+  .play-btn:hover {
+    background: #ff1a3a;
+    letter-spacing: 0.22em;
+  }
+  .play-btn:active { background: #b5001e; }
+
+  /* scanlines */
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent 0px, transparent 3px,
+      rgba(0,0,0,0.025) 3px, rgba(0,0,0,0.025) 4px
+    );
+    pointer-events: none;
+    z-index: 999;
+  }
+</style>
+</head>
+<body>
+
+<img id="bg" src="/mnt/user-data/uploads/1773999768869_mount-range.png" alt="mountain">
+<div id="vignette"></div>
+
+<!-- ══ HEADING ══ -->
+<div class="page-heading">
+  <h1 class="heading-title">Mission</h1>
+  <div class="heading-underline"></div>
+</div>
+
+<!-- ══ LEVEL MARKERS ══ -->
+
+<div class="level left" style="top:68px;" data-id="1">
+  <div class="level-tag"><div class="level-num">01</div><div class="level-sub">APEX</div><div class="level-hex">0xA1 // 4F2E</div></div>
+  <div class="level-line"></div>
+  <div class="level-dot"></div>
+</div>
+
+<div class="level right" style="top:175px;" data-id="2">
+  <div class="level-dot"></div>
+  <div class="level-line"></div>
+  <div class="level-tag"><div class="level-num">02</div><div class="level-sub">RIDGE·N</div><div class="level-hex">0xB2 // 7C91</div></div>
+</div>
+
+<div class="level left" style="top:315px;" data-id="3">
+  <div class="level-tag"><div class="level-num">03</div><div class="level-sub">SNOW·LINE</div><div class="level-hex">0xC3 // 1D8A</div></div>
+  <div class="level-line"></div>
+  <div class="level-dot"></div>
+</div>
+
+<div class="level right" style="top:470px;" data-id="4">
+  <div class="level-dot"></div>
+  <div class="level-line"></div>
+  <div class="level-tag"><div class="level-num">04</div><div class="level-sub">NARROWS</div><div class="level-hex">0xD4 // 3F55</div></div>
+</div>
+
+<div class="level left" style="top:645px;" data-id="5">
+  <div class="level-tag"><div class="level-num">05</div><div class="level-sub">MID·ZONE</div><div class="level-hex">0xE5 // 6B0C</div></div>
+  <div class="level-line"></div>
+  <div class="level-dot"></div>
+</div>
+
+<div class="level right" style="top:820px;" data-id="6">
+  <div class="level-dot"></div>
+  <div class="level-line"></div>
+  <div class="level-tag"><div class="level-num">06</div><div class="level-sub">ISLAND·A</div><div class="level-hex">0xF6 // 9E17</div></div>
+</div>
+
+<div class="level left" style="top:1000px;" data-id="7">
+  <div class="level-tag"><div class="level-num">07</div><div class="level-sub">BREACH</div><div class="level-hex">0x07 // A2F3</div></div>
+  <div class="level-line"></div>
+  <div class="level-dot"></div>
+</div>
+
+<div class="level right" style="top:1155px;" data-id="8">
+  <div class="level-dot"></div>
+  <div class="level-line"></div>
+  <div class="level-tag"><div class="level-num">08</div><div class="level-sub">ISLAND·B</div><div class="level-hex">0x08 // D41E</div></div>
+</div>
+
+<div class="level left" style="top:1330px;" data-id="9">
+  <div class="level-tag"><div class="level-num">09</div><div class="level-sub">TERMINUS</div><div class="level-hex">0x09 // 5C8B</div></div>
+  <div class="level-line"></div>
+  <div class="level-dot"></div>
+</div>
+
+<div class="level right" style="top:1482px;" data-id="10">
+  <div class="level-dot"></div>
+  <div class="level-line"></div>
+  <div class="level-tag"><div class="level-num">10</div><div class="level-sub">GROUND·ZERO</div><div class="level-hex">0xFF // 0000</div></div>
+</div>
+
+<!-- ══ DIALOGUE BOXES ══ (one per level, positioned at same top as marker) -->
+
+<!-- LVL 1 — left side -->
+<div class="dialogue side-left" id="dlg-1" style="top:48px;">
+  <div class="dlg-header"><span class="dlg-lvl">01</span><span class="dlg-zone">APEX // ZONE-A1</span></div>
+  <div class="dlg-body">
+    <div class="dlg-label">// MISSION OBJECTIVE</div>
+    <div class="dlg-task" id="dtask-1"></div>
+  </div>
+  <div class="dlg-sep"></div>
+  <div class="dlg-meta">
+    <div class="dlg-meta-item"><div class="dlg-meta-lbl">DIFFICULTY</div><div class="dlg-meta-val">EXTREME</div></div>
+    <div class="dlg-meta-item"><div class="dlg-meta-lbl">ALT</div><div class="dlg-meta-val">4892 M</div></div>
+    <div class="dlg-meta-item"><div class="dlg-meta-lbl">ETA</div><div class="dlg-meta-val">06:00 H</div></div>
+  </div>
+  <div class="dlg-footer"><button class="play-btn">▶ PLAY</button></div>
+</div>
+
+<!-- LVL 2 — right side -->
+<div class="dialogue side-right" id="dlg-2" style="top:155px;">
+  <div class="dlg-header"><span class="dlg-lvl">02</span><span class="dlg-zone">RIDGE·N // ZONE-B2</span></div>
+  <div class="dlg-body">
+    <div class="dlg-label">// MISSION OBJECTIVE</div>
+    <div class="dlg-task" id="dtask-2"></div>
+  </div>
+  <div class="dlg-sep"></div>
+  <div class="dlg-meta">
+    <div class="dlg-meta-item"><div class="dlg-meta-lbl">DIFFICULTY</div><div class="dlg-meta-val">HARD</div></div>
+    <div class="dlg-meta-item"><div class="dlg-meta-lbl">ALT</div><div class="dlg-meta-val">4210 M</div></div>
+    <div class="dlg-meta-item"><div class="dlg-meta-lbl">ETA</div><div class="dlg-meta-val">04:30 H</div></div>
+  </div>
+  <div class="dlg-footer"><button class="play-btn">▶ PLAY</button></div>
+</div>
+
+<!-- LVL 3 — left side -->
+<div class="dialogue side-left" id="dlg-3" style="top:295px;">
+  <div class="dlg-header"><span class="dlg-lvl">03</span><span class="dlg-zone">SNOW·LINE // ZONE-C3</span></div>
+  <div class="dlg-body">
+    <div class="dlg-label">// MISSION OBJECTIVE</div>
+    <div class="dlg-task" id="dtask-3"></div>
+  </div>
+  <div class="dlg-sep"></div>
+  <div class="dlg-meta">
+    <div class="dlg-meta-item"><div class="dlg-meta-lbl">DIFFICULTY</div><div class="dlg-meta-val">HARD</div></div>
+    <div class="dlg-meta-item"><div class="dlg-meta-lbl">ALT</div><div class="dlg-meta-val">3640 M</div></div>
+    <div class="dlg-meta-item"><div class="dlg-meta-lbl">ETA</div><div class="dlg-meta-val">03:45 H</div></div>
+  </div>
+  <div class="dlg-footer"><button class="play-btn">▶ PLAY</button></div>
+</div>
+
+<!-- LVL 4 — right side -->
+<div class="dialogue side-right" id="dlg-4" style="top:450px;">
+  <div class="dlg-header"><span class="dlg-lvl">04</span><span class="dlg-zone">NARROWS // ZONE-D4</span></div>
+  <div class="dlg-body">
+    <div class="dlg-label">// MISSION OBJECTIVE</div>
+    <div class="dlg-task" id="dtask-4"></div>
+  </div>
+  <div class="dlg-sep"></div>
+  <div class="dlg-meta">
+    <div class="dlg-meta-item"><div class="dlg-meta-lbl">DIFFICULTY</div><div class="dlg-meta-val">MEDIUM</div></div>
+    <div class="dlg-meta-item"><div class="dlg-meta-lbl">ALT</div><div class="dlg-meta-val">3020 M</div></div>
+    <div class="dlg-meta-item"><div class="dlg-meta-lbl">ETA</div><div class="dlg-meta-val">03:00 H</div></div>
+  </div>
+  <div class="dlg-footer"><button class="play-btn">▶ PLAY</button></div>
+</div>
+
+<!-- LVL 5 — left side -->
+<div class="dialogue side-left" id="dlg-5" style="top:625px;">
+  <div class="dlg-header"><span class="dlg-lvl">05</span><span class="dlg-zone">MID·ZONE // ZONE-E5</span></div>
+  <div class="dlg-body">
+    <div class="dlg-label">// MISSION OBJECTIVE</div>
+    <div class="dlg-task" id="dtask-5"></div>
+  </div>
+  <div class="dlg-sep"></div>
+  <div class="dlg-meta">
+    <div class="dlg-meta-item"><div class="dlg-meta-lbl">DIFFICULTY</div><div class="dlg-meta-val">MEDIUM</div></div>
+    <div class="dlg-meta-item"><div class="dlg-meta-lbl">ALT</div><div class="dlg-meta-val">2400 M</div></div>
+    <div class="dlg-meta-item"><div class="dlg-meta-lbl">ETA</div><div class="dlg-meta-val">02:20 H</div></div>
+  </div>
+  <div class="dlg-footer"><button class="play-btn">▶ PLAY</button></div>
+</div>
+
+<!-- LVL 6 — right side -->
+<div class="dialogue side-right" id="dlg-6" style="top:800px;">
+  <div class="dlg-header"><span class="dlg-lvl">06</span><span class="dlg-zone">ISLAND·A // ZONE-F6</span></div>
+  <div class="dlg-body">
+    <div class="dlg-label">// MISSION OBJECTIVE</div>
+    <div class="dlg-task" id="dtask-6"></div>
+  </div>
+  <div class="dlg-sep"></div>
+  <div class="dlg-meta">
+    <div class="dlg-meta-item"><div class="dlg-meta-lbl">DIFFICULTY</div><div class="dlg-meta-val">MEDIUM</div></div>
+    <div class="dlg-meta-item"><div class="dlg-meta-lbl">ALT</div><div class="dlg-meta-val">1880 M</div></div>
+    <div class="dlg-meta-item"><div class="dlg-meta-lbl">ETA</div><div class="dlg-meta-val">01:50 H</div></div>
+  </div>
+  <div class="dlg-footer"><button class="play-btn">▶ PLAY</button></div>
+</div>
+
+<!-- LVL 7 — left side -->
+<div class="dialogue side-left" id="dlg-7" style="top:980px;">
+  <div class="dlg-header"><span class="dlg-lvl">07</span><span class="dlg-zone">BREACH // ZONE-G7</span></div>
+  <div class="dlg-body">
+    <div class="dlg-label">// MISSION OBJECTIVE</div>
+    <div class="dlg-task" id="dtask-7"></div>
+  </div>
+  <div class="dlg-sep"></div>
+  <div class="dlg-meta">
+    <div class="dlg-meta-item"><div class="dlg-meta-lbl">DIFFICULTY</div><div class="dlg-meta-val">LOW</div></div>
+    <div class="dlg-meta-item"><div class="dlg-meta-lbl">ALT</div><div class="dlg-meta-val">1320 M</div></div>
+    <div class="dlg-meta-item"><div class="dlg-meta-lbl">ETA</div><div class="dlg-meta-val">01:20 H</div></div>
+  </div>
+  <div class="dlg-footer"><button class="play-btn">▶ PLAY</button></div>
+</div>
+
+<!-- LVL 8 — right side -->
+<div class="dialogue side-right" id="dlg-8" style="top:1135px;">
+  <div class="dlg-header"><span class="dlg-lvl">08</span><span class="dlg-zone">ISLAND·B // ZONE-H8</span></div>
+  <div class="dlg-body">
+    <div class="dlg-label">// MISSION OBJECTIVE</div>
+    <div class="dlg-task" id="dtask-8"></div>
+  </div>
+  <div class="dlg-sep"></div>
+  <div class="dlg-meta">
+    <div class="dlg-meta-item"><div class="dlg-meta-lbl">DIFFICULTY</div><div class="dlg-meta-val">LOW</div></div>
+    <div class="dlg-meta-item"><div class="dlg-meta-lbl">ALT</div><div class="dlg-meta-val">840 M</div></div>
+    <div class="dlg-meta-item"><div class="dlg-meta-lbl">ETA</div><div class="dlg-meta-val">00:55 H</div></div>
+  </div>
+  <div class="dlg-footer"><button class="play-btn">▶ PLAY</button></div>
+</div>
+
+<!-- LVL 9 — left side -->
+<div class="dialogue side-left" id="dlg-9" style="top:1310px;">
+  <div class="dlg-header"><span class="dlg-lvl">09</span><span class="dlg-zone">TERMINUS // ZONE-I9</span></div>
+  <div class="dlg-body">
+    <div class="dlg-label">// MISSION OBJECTIVE</div>
+    <div class="dlg-task" id="dtask-9"></div>
+  </div>
+  <div class="dlg-sep"></div>
+  <div class="dlg-meta">
+    <div class="dlg-meta-item"><div class="dlg-meta-lbl">DIFFICULTY</div><div class="dlg-meta-val">MINIMAL</div></div>
+    <div class="dlg-meta-item"><div class="dlg-meta-lbl">ALT</div><div class="dlg-meta-val">420 M</div></div>
+    <div class="dlg-meta-item"><div class="dlg-meta-lbl">ETA</div><div class="dlg-meta-val">00:30 H</div></div>
+  </div>
+  <div class="dlg-footer"><button class="play-btn">▶ PLAY</button></div>
+</div>
+
+<!-- LVL 10 — right side -->
+<div class="dialogue side-right" id="dlg-10" style="top:1462px;">
+  <div class="dlg-header"><span class="dlg-lvl">10</span><span class="dlg-zone">GROUND·ZERO // ZONE-J10</span></div>
+  <div class="dlg-body">
+    <div class="dlg-label">// MISSION OBJECTIVE</div>
+    <div class="dlg-task" id="dtask-10"></div>
+  </div>
+  <div class="dlg-sep"></div>
+  <div class="dlg-meta">
+    <div class="dlg-meta-item"><div class="dlg-meta-lbl">DIFFICULTY</div><div class="dlg-meta-val">COMPLETE</div></div>
+    <div class="dlg-meta-item"><div class="dlg-meta-lbl">ALT</div><div class="dlg-meta-val">0 M</div></div>
+    <div class="dlg-meta-item"><div class="dlg-meta-lbl">ETA</div><div class="dlg-meta-val">00:00 H</div></div>
+  </div>
+  <div class="dlg-footer"><button class="play-btn">▶ PLAY</button></div>
+</div>
+
+<!-- Spine SVG -->
+<svg style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:5;pointer-events:none;"
+     viewBox="0 0 720 1560" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="spineGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="rgba(232,0,45,0.0)"/>
+      <stop offset="8%"   stop-color="rgba(232,0,45,0.5)"/>
+      <stop offset="50%"  stop-color="rgba(232,0,45,0.35)"/>
+      <stop offset="92%"  stop-color="rgba(232,0,45,0.5)"/>
+      <stop offset="100%" stop-color="rgba(232,0,45,0.0)"/>
+    </linearGradient>
+  </defs>
+  <path d="M360,72 Q359,150 358,220 Q357,300 357,370 Q356,450 355,480 Q354,570 353,650 Q351,740 349,825 Q347,910 344,1005 Q341,1090 337,1160 Q333,1250 328,1335 Q323,1415 316,1486"
+    stroke="url(#spineGrad)" stroke-width="0.8" fill="none" stroke-dasharray="5,4" opacity="0.7"/>
+</svg>
+
+<script>
+  const tasks = {
+    1:  "Reach the summit apex and plant the beacon. Navigate extreme wind shear above 4800m. Oxygen supply critical — move fast, waste nothing.",
+    2:  "Secure the northern ridge outpost. Enemy recon drones patrol this sector. Stay low, use rock formations for cover. Report back on comms channel 7.",
+    3:  "Cross the snow line before dawn. Avalanche risk is HIGH on the eastern face. Plant three seismic sensors along the traverse route.",
+    4:  "Navigate the narrows — a 40-metre corridor between two cliff faces. Route is compromised. Find the alternate path and clear the debris blocking descent.",
+    5:  "Rendezvous at mid-zone extraction point. Retrieve the data package from the crashed probe. Timer active — you have 18 minutes once you arrive.",
+    6:  "Secure Island-Alpha before tide rise. The eastern islet floods every 6 hours. Locate the submerged equipment cache and retrieve the encrypted drive.",
+    7:  "Breach the sea-level gap. Currents between the island sections run at 12 knots. Time your crossing with precision — one window available every 90 minutes.",
+    8:  "Establish forward base on Island-Bravo. Clear the landing zone of debris. Prepare the comm relay tower for activation at 0300 hours.",
+    9:  "Reach the terminus point and confirm coordinates for the final drop. Radio silence is mandatory. Signal with mirror flash — three bursts, two seconds each.",
+    10: "Ground Zero confirmed. All objectives complete. Await extraction. Final debrief transmission encoded and transmitted. Mission clock: stopped."
+  };
+
+  let activeId = null;
+  let typingTimeout = null;
+
+  function typeText(el, text, onDone) {
+    el.innerHTML = '';
+    const cursor = document.createElement('span');
+    cursor.className = 'dlg-cursor';
+    el.appendChild(cursor);
+    let i = 0;
+    function tick() {
+      if (i < text.length) {
+        cursor.insertAdjacentText('beforebegin', text[i]);
+        i++;
+        typingTimeout = setTimeout(tick, 22 + Math.random() * 18);
+      } else {
+        cursor.remove();
+        if (onDone) onDone();
+      }
+    }
+    tick();
+  }
+
+  function closeActive() {
+    if (!activeId) return;
+    const prev    = document.getElementById('dlg-' + activeId);
+    const prevLvl = document.querySelector('.level[data-id="' + activeId + '"]');
+    const prevDot = prevLvl ? prevLvl.querySelector('.level-dot') : null;
+    if (prev)    prev.classList.remove('open');
+    if (prevLvl) prevLvl.classList.remove('active-level');
+    if (prevDot) prevDot.classList.remove('active');
+    clearTimeout(typingTimeout);
+    activeId = null;
+  }
+
+  function openDialogue(id) {
+    if (activeId === id) { closeActive(); return; }
+    closeActive();
+
+    const dlg = document.getElementById('dlg-' + id);
+    const lvl = document.querySelector('.level[data-id="' + id + '"]');
+    const dot = lvl ? lvl.querySelector('.level-dot') : null;
+
+    activeId = id;
+    dlg.classList.add('open');
+    if (lvl) lvl.classList.add('active-level');
+    if (dot) dot.classList.add('active');
+
+    const taskEl = document.getElementById('dtask-' + id);
+    clearTimeout(typingTimeout);
+    taskEl.innerHTML = '';
+    setTimeout(() => typeText(taskEl, tasks[id]), 380);
+  }
+
+  // attach click to tags and dots
+  document.querySelectorAll('.level').forEach(lvl => {
+    const id = parseInt(lvl.dataset.id);
+    lvl.querySelector('.level-tag').addEventListener('click', (e) => { e.stopPropagation(); openDialogue(id); });
+    lvl.querySelector('.level-dot').addEventListener('click',  (e) => { e.stopPropagation(); openDialogue(id); });
+  });
+
+  // close on outside click
+  document.addEventListener('click', (e) => {
+    if (!activeId) return;
+    const dlg = document.getElementById('dlg-' + activeId);
+    if (dlg && !dlg.contains(e.target)) closeActive();
+  });
+
+  // dialogue clicks don't propagate
+  document.querySelectorAll('.dialogue').forEach(d => d.addEventListener('click', e => e.stopPropagation()));
+
+  // play buttons
+  document.querySelectorAll('.play-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      btn.textContent = '▶ LOADING...';
+      setTimeout(() => { btn.textContent = '▶ PLAY'; }, 1800);
+    });
+  });
+</script>
+
+</body>
+</html>
