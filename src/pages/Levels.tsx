@@ -293,7 +293,7 @@ const Levels = () => {
         .dialogue {
           position: absolute;
           z-index: 20;
-          width: 220px;
+          width: 240px;
           background: rgba(4,0,1,0.93);
           border: 0.75px solid rgba(232,0,45,0.5);
           overflow: hidden;
@@ -301,7 +301,6 @@ const Levels = () => {
           max-height: 0;
           opacity: 0;
           transform: scaleY(0.6);
-          transform-origin: top center;
           transition:
             max-height 0.45s cubic-bezier(0.16,1,0.3,1),
             opacity 0.3s ease,
@@ -315,13 +314,39 @@ const Levels = () => {
         }
         
         .dialogue.side-left {
-          right: calc(50% + 58px);
+          right: calc(50% + 150px);
           border-right: 2px solid #e8002d;
+          transform-origin: top right;
         }
         
         .dialogue.side-right {
-          left: calc(50% + 58px);
+          left: calc(50% + 150px);
           border-left: 2px solid #e8002d;
+          transform-origin: top left;
+        }
+        
+        .dlg-connector {
+          position: absolute;
+          z-index: 15;
+          height: 1px;
+          width: 148px;
+          pointer-events: none;
+          opacity: 0;
+          transition: opacity 0.4s ease 0.1s;
+        }
+        
+        .dlg-connector.visible {
+          opacity: 1;
+        }
+        
+        .dlg-connector.conn-left {
+          right: calc(50% + 2px);
+          background: linear-gradient(90deg, rgba(232,0,45,0.15) 0%, rgba(232,0,45,0.5) 100%);
+        }
+        
+        .dlg-connector.conn-right {
+          left: calc(50% + 2px);
+          background: linear-gradient(270deg, rgba(232,0,45,0.15) 0%, rgba(232,0,45,0.5) 100%);
         }
         
         .dlg-header {
@@ -596,15 +621,21 @@ const Levels = () => {
           </div>
         ))}
 
-        {/* Dialogue Boxes */}
+        {/* Dialogue Boxes + Connector Lines */}
         {levels.map((level) => (
-          <div
-            key={`dlg-${level.id}`}
-            id={`dlg-${level.id}`}
-            className={`dialogue side-${level.side} ${activeId === level.id ? 'open' : ''}`}
-            style={{ top: `${level.top - 20}px` }}
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div key={`dlg-wrap-${level.id}`}>
+            {/* Connector line from dot to dialogue */}
+            <div
+              className={`dlg-connector conn-${level.side} ${activeId === level.id ? 'visible' : ''}`}
+              style={{ top: `${level.top + 3}px` }}
+            ></div>
+            <div
+              key={`dlg-${level.id}`}
+              id={`dlg-${level.id}`}
+              className={`dialogue side-${level.side} ${activeId === level.id ? 'open' : ''}`}
+              style={{ top: `${level.top - 20}px` }}
+              onClick={(e) => e.stopPropagation()}
+            >
             <div className="dlg-header">
               <span className="dlg-lvl">{level.num}</span>
               <span className="dlg-zone">{level.sub} // {level.zone}</span>
@@ -636,6 +667,7 @@ const Levels = () => {
                 ▶ PLAY
               </button>
             </div>
+          </div>
           </div>
         ))}
 
