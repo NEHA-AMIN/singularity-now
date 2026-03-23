@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 
 const Levels = () => {
-  const [activeId, setActiveId] = useState<number | null>(null);
-  const [typingText, setTypingText] = useState<{ [key: number]: string }>({});
-  const [isTyping, setIsTyping] = useState<{ [key: number]: boolean }>({});
-  const [customBg, setCustomBg] = useState<string | null>(null);
-  const [bgBlur, setBgBlur] = useState<number>(0);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [activeId, setActiveId] = useState(null);
+  const [typingText, setTypingText] = useState({});
+  const [isTyping, setIsTyping] = useState({});
+  const [customBg, setCustomBg] = useState(null);
+  const [bgBlur, setBgBlur] = useState(0);
+  const typingTimeoutRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   const levels = [
     { id: 1, num: "01", sub: "GROUND·ZERO", hex: "0xFF // 0000", top: 1025, side: "right", zone: "ZONE-J1", difficulty: "COMPLETE", alt: "0 M", eta: "00:00 H" },
@@ -22,7 +22,7 @@ const Levels = () => {
     { id: 10, num: "10", sub: "APEX", hex: "0xA1 // 4F2E", top: 47, side: "left", zone: "ZONE-A10", difficulty: "EXTREME", alt: "4892 M", eta: "06:00 H" },
   ];
 
-  const tasks: { [key: number]: string } = {
+  const tasks = {
     1: "Ground Zero confirmed. All objectives complete. Await extraction. Final debrief transmission encoded and transmitted. Mission clock: stopped.",
     2: "Reach the terminus point and confirm coordinates for the final drop. Radio silence is mandatory. Signal with mirror flash — three bursts, two seconds each.",
     3: "Establish forward base on Island-Bravo. Clear the landing zone of debris. Prepare the comm relay tower for activation at 0300 hours.",
@@ -35,7 +35,7 @@ const Levels = () => {
     10: "Reach the summit apex and plant the beacon. Navigate extreme wind shear above 4800m. Oxygen supply critical — move fast, waste nothing."
   };
 
-  const typeText = (id: number, text: string) => {
+  const typeText = (id, text) => {
     setTypingText(prev => ({ ...prev, [id]: '' }));
     setIsTyping(prev => ({ ...prev, [id]: true }));
     
@@ -59,37 +59,32 @@ const Levels = () => {
     setActiveId(null);
   };
 
-  const openDialogue = (id: number) => {
-    console.log('🔴 openDialogue called with id:', id);
-    console.log('🔴 current activeId:', activeId);
-    console.log('🔴 tasks[id]:', tasks[id]);
+  const openDialogue = (e, id) => {
+    e.stopPropagation();
     if (activeId === id) {
-      console.log('🔴 Closing active dialogue');
       closeActive();
       return;
     }
     closeActive();
     setActiveId(id);
-    console.log('🔴 Setting activeId to:', id);
     setTimeout(() => {
-      console.log('🔴 Starting typing animation for id:', id);
       typeText(id, tasks[id]);
     }, 380);
   };
 
-  const handlePlayClick = (e: React.MouseEvent, id: number) => {
+  const handlePlayClick = (e, id) => {
     e.stopPropagation();
-    const btn = e.currentTarget as HTMLButtonElement;
+    const btn = e.currentTarget;
     btn.textContent = '▶ LOADING...';
     setTimeout(() => { btn.textContent = '▶ PLAY'; }, 1800);
   };
 
-  const handleBgUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleBgUpload = (e) => {
     const file = e.target.files?.[0];
     if (file && file.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        setCustomBg(event.target?.result as string);
+        setCustomBg(event.target?.result);
       };
       reader.readAsDataURL(file);
     }
@@ -108,10 +103,11 @@ const Levels = () => {
   };
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
+    const handleClickOutside = (e) => {
       if (!activeId) return;
       const dlg = document.getElementById(`dlg-${activeId}`);
-      if (dlg && !dlg.contains(e.target as Node)) {
+      const lvl = document.querySelector(`.level[data-id="${activeId}"]`);
+      if (dlg && !dlg.contains(e.target) && (!lvl || !lvl.contains(e.target))) {
         closeActive();
       }
     };
@@ -125,10 +121,6 @@ const Levels = () => {
     };
   }, [activeId]);
 
-  useEffect(() => {
-    console.log('Levels component mounted - dialogue boxes ready');
-  }, []);
-
   return (
     <div style={{
       background: "#000",
@@ -140,11 +132,14 @@ const Levels = () => {
       overflow: "auto",
     }}>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@700;900&display=swap');
+        
         .levels-container {
           position: relative;
           width: 1920px;
           min-height: 1080px;
           overflow: hidden;
+          font-family: 'Orbitron', monospace;
         }
         
         .levels-bg {
@@ -563,16 +558,17 @@ const Levels = () => {
         />
         <div className="levels-vignette"></div>
 
-        {/* Levels */}
+        {/* Level Markers */}
         {levels.map((level) => (
           <div
             key={level.id}
+            data-id={level.id}
             className={`level ${level.side} ${activeId === level.id ? 'active-level' : ''}`}
             style={{ top: `${level.top}px` }}
           >
             {level.side === "left" ? (
               <>
-                <div className="level-tag" onClick={() => openDialogue(level.id)}>
+                <div className="level-tag" onClick={(e) => openDialogue(e, level.id)}>
                   <div className="level-num">{level.num}</div>
                   <div className="level-sub">{level.sub}</div>
                   <div className="level-hex">{level.hex}</div>
@@ -580,17 +576,17 @@ const Levels = () => {
                 <div className="level-line"></div>
                 <div
                   className={`level-dot ${activeId === level.id ? 'active' : ''}`}
-                  onClick={() => openDialogue(level.id)}
+                  onClick={(e) => openDialogue(e, level.id)}
                 ></div>
               </>
             ) : (
               <>
                 <div
                   className={`level-dot ${activeId === level.id ? 'active' : ''}`}
-                  onClick={() => openDialogue(level.id)}
+                  onClick={(e) => openDialogue(e, level.id)}
                 ></div>
                 <div className="level-line"></div>
-                <div className="level-tag" onClick={() => openDialogue(level.id)}>
+                <div className="level-tag" onClick={(e) => openDialogue(e, level.id)}>
                   <div className="level-num">{level.num}</div>
                   <div className="level-sub">{level.sub}</div>
                   <div className="level-hex">{level.hex}</div>
@@ -681,5 +677,3 @@ const Levels = () => {
 };
 
 export default Levels;
-
-// Made with Bob
